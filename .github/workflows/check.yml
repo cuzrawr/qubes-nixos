@@ -1,0 +1,48 @@
+name: Check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: check-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: cachix/install-nix-action@13d8dd58da0234aa297dedd986986ccb8e7f3e24 # v31.11.1
+        with:
+          install_url: https://releases.nixos.org/nix/nix-2.32.1/install
+          enable_kvm: false
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+      - name: Check formatting
+        run: |
+          nix fmt
+          git diff --exit-code
+      - name: Check flake and packaging helpers
+        run: |
+          nix flake check --no-update-lock-file --show-trace
+          nix build .#sign-template --no-link --no-update-lock-file
+      - name: Check documentation encoding
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import subprocess
+
+          files = subprocess.check_output(["git", "ls-files", "-z"], text=True)
+          for name in files.split("\0"):
+              if name.endswith(".md"):
+                  assert Path(name).read_bytes().isascii(), name
+          PY
