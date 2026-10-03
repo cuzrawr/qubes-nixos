@@ -25,7 +25,11 @@ Unstable results apply to the pinned snapshot, not a released NixOS 26.11.
 | Stock PVH kernel reaches NixOS stage 2 | Pass | Pass |
 | Current/booted system links and matching Xen modules | Pass | Pass |
 | Second diagnostic boot after orderly shutdown | Pass | Pass |
-| Normal desktop RPM install, including post-install RPC | Pass | Pending |
+| Normal desktop RPM install, including post-install RPC | Pass | Pass |
+| Exact embedded source matches the signed build commit | Pass | Pass |
+| Normal TemplateVM/AppVM startup; zero failed system/user units | Pass | Pass |
+| AppVM second boot, private persistence and discarded root changes | Pass | Pass |
+| Networkless template UpdatesProxy and AppVM HTTPS | Pass | Pass |
 | Complete release runtime acceptance | Pending | Pending |
 
 Wrong-key verification rejected the RPM; verification with the matching public
@@ -95,7 +99,7 @@ See [adaptations and upstream proposals](adaptations.md) for causes and scope.
 | Measurement | Stable | Unstable |
 | --- | --- | --- |
 | System closure, NAR data | 5.347 GiB | 5.434 GiB |
-| Pre-release compressed signed RPM | 1.411 GiB | 1.441 GiB |
+| Pre-release compressed signed RPM | 1.415 GiB | 1.436 GiB |
 
 Closure size is not allocated disk usage. Native compression, debug stripping,
 documentation selection and one MBROLA voice per language reduce size without

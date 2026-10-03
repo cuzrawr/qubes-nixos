@@ -1,13 +1,18 @@
 # Distribute templates
 
-No public binary release is available yet. These are the supported publication
-methods; the repository URLs below are examples until publication.
+The project public key is [published here](../repository/RPM-GPG-KEY-qubes-nixos).
+Fingerprint: `4B90 5004 6403 DDD1 B6F1 FCF7 A752 8E30 ED60 389C`.
+Published builds: [GitHub Releases](https://github.com/cuzrawr/qubes-nixos/releases).
 
 Build with a committed lock file, complete the acceptance tests, and sign the
 RPMs outside Nix. Publish the source commit, nixpkgs pins, checksums, public key
 fingerprint and test results with each release. Increase the RPM `release`
 argument in `flake.nix` for a replacement build; do not replace an existing
 release asset with different bytes.
+
+The upstream template RPM spec supplies a GPLv3+ package label. The contained
+components retain their own licenses; this repository's integration source has
+no license grant yet.
 
 Keep private keys outside the repository, build inputs and template. Use a
 dedicated `GNUPGHOME` for all signing commands below.
@@ -22,7 +27,7 @@ export GNUPGHOME=/path/to/project-signing-keyring
 install -d -m700 "$GNUPGHOME"
 
 # For a new working identity; use its printed fingerprint below.
-gpg --quick-generate-key 'YOUR_RELEASE_IDENTITY' rsa3072 sign 1y
+gpg --quick-generate-key 'YOUR_RELEASE_IDENTITY' rsa3072 sign 0
 mkdir -p artifacts
 nix run .#sign-template -- YOUR_KEY_FINGERPRINT \
   result-stable/qubes-template-nixos-26.05-xfce-4.3.0-1.noarch.rpm \
@@ -35,6 +40,9 @@ For unstable, use `result-unstable/` and
 Existing working key: omit key generation. Keep this keyring outside the checkout;
 back it up separately. `sign-template` requires an explicit signing keyring.
 
+Back up signing keys and revocation certificates offline. Never upload them
+to GitHub. A compromised key requires revocation and a new client trust setup.
+
 ## GitHub Releases
 
 GitHub can host the signed RPMs as release assets. Users download them in a
@@ -44,10 +52,11 @@ After signing into `artifacts/`, enter the publishing shell:
 
 ```sh
 nix develop .#release
-sha256sum artifacts/*.rpm > artifacts/SHA256SUMS
+(cd artifacts && sha256sum *.rpm > SHA256SUMS)
+gpg --armor --detach-sign artifacts/SHA256SUMS
 gh release create v0.1.0 --draft --verify-tag \
   --title 'NixOS templates v0.1.0' --notes-file release-notes.txt \
-  artifacts/*.rpm artifacts/template-key.asc artifacts/SHA256SUMS
+  artifacts/*.rpm artifacts/template-key.asc artifacts/SHA256SUMS artifacts/SHA256SUMS.asc
 ```
 
 Create and push the reviewed source tag first. Review the draft and publish it
@@ -72,9 +81,10 @@ createrepo_c \
 gpg --armor --detach-sign artifacts/rpm-repo/repodata/repomd.xml
 ```
 
-Publish only `repodata/` under the Pages path `rpm/r4.3/x86_64/`, together with
-the public key and release information. Publish the exact same signed RPMs
-under that release. Enable Pages using GitHub's repository settings. For later
+Copy only `repodata/` into `repository/rpm/r4.3/x86_64/`, together with the public
+key and client files already in `repository/`. The Pages workflow publishes that
+directory after verifying its metadata signature. Publish the exact same signed
+RPMs under that release. For later
 versions, rebuild metadata pointing to the new release; preserve old release
 assets for users who need them.
 

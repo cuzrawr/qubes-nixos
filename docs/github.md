@@ -23,7 +23,9 @@ Triggers: pushes to `main`, pull requests and manual runs.
   disk allowance is too small for the full image pipeline without runner workarounds.
 - Actions are pinned by commit. Repository token permissions: `contents: read`.
 - No private signing keys or runtime-test credentials in CI.
-- No hosted-runner artifact upload or Nix cache service is required.
+- No external Nix cache or image artifact storage is required for source checks.
+
+Current results: [source checks](https://github.com/cuzrawr/qubes-nixos/actions/workflows/check.yml).
 
 Sources: [runner limits](https://docs.github.com/en/actions/reference/runners/github-hosted-runners),
 [Actions billing](https://docs.github.com/en/billing/concepts/product-billing/github-actions).
@@ -45,6 +47,9 @@ Sources: [runner limits](https://docs.github.com/en/actions/reference/runners/gi
   A GitHub source URL alone is not a template repository.
 - Keep signing local. Upload public signatures and public keys only.
 - Keep untrusted pull-request jobs isolated from signing and runtime testing.
+- The separate [Pages workflow](../.github/workflows/pages.yml) verifies the
+  signed metadata, uploads only `repository/`, then deploys it. Its deployment
+  job has `pages: write` and `id-token: write`; it receives no signing key.
 
 [Publication and client setup](distribution.md).
 

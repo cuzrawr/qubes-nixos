@@ -1,14 +1,17 @@
 # Repository files
 
-Generated images, RPMs, private keys, caches and test logs are not source files.
+RPMs, private keys, build caches and test logs stay outside the repository.
+`repository/` contains only public installation files and signed metadata.
 
 ```text
 .github/workflows/check.yml
+.github/workflows/pages.yml
 .gitignore
 README.md
 WHY.md
 configuration.nix
 docs/adaptations.md
+docs/comparison.md
 docs/configuration.md
 docs/distribution.md
 docs/files.md
@@ -50,6 +53,14 @@ pkgs/sources.nix
 pkgs/split-gpg2.nix
 pkgs/update-vm.nix
 pkgs/usb-proxy.nix
+repository/RPM-GPG-KEY-qubes-nixos
+repository/index.html
+repository/qubes-nixos.repo
+repository/rpm/r4.3/x86_64/repodata/*-other.xml.zst
+repository/rpm/r4.3/x86_64/repodata/*-primary.xml.zst
+repository/rpm/r4.3/x86_64/repodata/*-filelists.xml.zst
+repository/rpm/r4.3/x86_64/repodata/repomd.xml
+repository/rpm/r4.3/x86_64/repodata/repomd.xml.asc
 scripts/sign-template.sh
 tests/boot.nix
 tests/core.nix
@@ -57,3 +68,5 @@ tests/desktop.nix
 tests/lab-network.py
 tests/test_paths.py
 ```
+
+Metadata filenames begin with their content checksum and change per release.

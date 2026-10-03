@@ -5,9 +5,12 @@ applications, Firefox, native clipboard, file transfer, devices and audio.
 
 - Configuration: ordinary writable NixOS flake in `/etc/nixos`.
 - Source: [GitHub](https://github.com/cuzrawr/qubes-nixos).
-- Status: final RPM acceptance in progress; [test results](docs/testing.md).
-- Public binaries: not published yet.
+- Version coverage and known limitations: [test results](docs/testing.md).
+- Signed binaries: [GitHub Releases](https://github.com/cuzrawr/qubes-nixos/releases).
 - License: integration code unlicensed for now; upstream licenses unchanged.
+
+[Source checks](https://github.com/cuzrawr/qubes-nixos/actions/workflows/check.yml) |
+[Debian/Fedora comparison](docs/comparison.md)
 
 ## Versions
 
@@ -26,6 +29,46 @@ Unstable is a pinned development snapshot, not released NixOS 26.11.
 Exact revisions: [flake.lock](flake.lock). Boot rationale: [WHY.md](WHY.md).
 
 ## 1. Install and remove
+
+### Install with Qubes Template Manager
+
+One-time setup for Qubes 4.3, after the signed release is published.
+
+1. In a networked qube, download
+   [the repository file](https://cuzrawr.github.io/qubes-nixos/qubes-nixos.repo) and
+   [the public key](https://cuzrawr.github.io/qubes-nixos/RPM-GPG-KEY-qubes-nixos)
+   into `Downloads`.
+2. In dom0, replace `DOWNLOAD_QUBE` with that qube's name:
+
+```sh
+qvm-run --pass-io DOWNLOAD_QUBE 'cat ~/Downloads/qubes-nixos.repo' > qubes-nixos.repo
+qvm-run --pass-io DOWNLOAD_QUBE 'cat ~/Downloads/RPM-GPG-KEY-qubes-nixos' > RPM-GPG-KEY-qubes-nixos
+gpg --show-keys --with-fingerprint RPM-GPG-KEY-qubes-nixos
+```
+
+Check the fingerprint:
+`4B90 5004 6403 DDD1 B6F1 FCF7 A752 8E30 ED60 389C`.
+Then install the two files:
+
+```sh
+sudo install -Dm644 RPM-GPG-KEY-qubes-nixos /etc/qubes/repo-templates/keys/RPM-GPG-KEY-qubes-nixos
+sudo install -Dm644 qubes-nixos.repo /etc/qubes/repo-templates/qubes-nixos.repo
+qvm-template-gui
+```
+
+3. Refresh repository data. Select `nixos-26.05-xfce` (stable) or
+   `nixos-unstable-xfce` (development), then Install.
+4. Create an AppVM in Qubes Manager and choose the installed template.
+
+Later installations use the GUI directly. No dom0 networking is needed.
+This is a third-party repository, separate from Qubes' official community list.
+
+CLI after the same one-time setup:
+
+```sh
+qvm-template --repoid=qubes-nixos --refresh install nixos-26.05-xfce
+# Or: qvm-template --repoid=qubes-nixos --refresh install nixos-unstable-xfce
+```
 
 ### Local build
 
@@ -121,6 +164,8 @@ Add/remove list entries, then rebuild:
 
 Shut down the template; restart its AppVMs. Menus refresh automatically.
 Firefox is controlled by `programs.firefox.enable`, not that package list.
+Use Nix to manage guest software. The bundled DNF/RPM tools serve the UpdateVM
+role; they do not manage this NixOS installation.
 
 Default applications: Firefox, Thunar, Mousepad, XFCE Terminal, Atril, Claws Mail,
 Galculator, Geany, KeePassXC, Xarchiver and XFCE utilities.
