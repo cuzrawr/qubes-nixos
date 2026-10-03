@@ -30,14 +30,16 @@ Installed tools do not grant cross-qube access:
 | --- | --- |
 | `services.qubes.enable` | Keep enabled; disabling removes the boot/guest integration |
 | `boot.kernel.enable`, `boot.initrd.enable` | Keep `false`; dom0 provides the kernel, initramfs and matching modules |
+| Extra kernel modules / guest kernel settings | Nix-built modules may not match the Qubes kernel; select/update the kernel through Qubes and use its matching modules |
 | Root filesystem and `/rw` devices | Qubes supplies `dmroot` and `xvdb`; do not replace with host block devices |
 | `/nix` persistence | Keep on template root; a shared writable or home-backed store changes isolation and rollback behavior |
+| Secrets in flake sources or Nix values | Can enter the world-readable store and shared template root; keep secrets outside build inputs |
 | `system.stateVersion` | Keep the original `26.05`; it controls compatibility defaults, not the selected release |
 | User `user`, UID 1000 | Matches the default guest account; changing it requires matching Qubes default-user and ownership settings |
 | Guest passwords/sudo/polkit | Standard Qubes model: the desktop user administers its own qube; isolation is between qubes |
 | NixOS firewall/networkd/resolvconf | Qubes manages the Xen uplink and firewall; a second configurator can overwrite routes or rules |
 | `services.qubes.updates.directory` | Writable flake directory; default `/etc/nixos` |
-| `services.qubes.updates.configuration` | Must name an existing `nixosConfigurations` entry |
+| `services.qubes.updates.configuration` | Must name an existing `nixosConfigurations` entry; custom names are supported |
 | `services.qubes.updates.inputs` | Chooses inputs refreshed by the update RPC/checker; empty means all inputs |
 | Binary caches and trusted public keys | Changes whose prebuilt code Nix accepts; review before adding |
 | `nix.settings.trusted-users` | Grants powerful Nix daemon capabilities; not needed for ordinary package use |

@@ -62,10 +62,13 @@
       ];
       templateUnstable = (mkTemplateSystem nixpkgs-unstable).extendModules {
         modules = [
-          {
-            services.qubes.updates.configuration = "nixos-unstable";
-            services.qubes.updates.inputs = [ "nixpkgs-unstable" ];
-          }
+          (
+            { lib, ... }:
+            {
+              services.qubes.updates.configuration = lib.mkDefault "nixos-unstable";
+              services.qubes.updates.inputs = lib.mkDefault [ "nixpkgs-unstable" ];
+            }
+          )
         ];
       };
       imageWithContents =

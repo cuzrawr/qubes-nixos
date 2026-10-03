@@ -41,7 +41,7 @@ let
       scratch=$(mktemp -d)
       trap 'rm -rf "$scratch"' EXIT
       nix flake update --flake ${lib.escapeShellArg cfg.directory} --output-lock-file "$scratch/flake.lock" ${lib.escapeShellArgs cfg.inputs}
-      candidate=$(nix eval --raw --no-write-lock-file --reference-lock-file "$scratch/flake.lock" ${lib.escapeShellArg "path:${cfg.directory}#nixosConfigurations.${cfg.configuration}.config.system.build.toplevel.outPath"})
+      candidate=$(nix eval --raw --no-write-lock-file --reference-lock-file "$scratch/flake.lock" ${lib.escapeShellArg "path:${cfg.directory}#nixosConfigurations.${lib.strings.escapeNixIdentifier cfg.configuration}.config.system.build.toplevel.outPath"})
       if [ "$candidate" = "$(readlink -f /run/current-system)" ]; then count=0; else count=1; fi
       printf '%s\n' "$count" | qrexec-client-vm dom0 qubes.NotifyUpdates
     ''
