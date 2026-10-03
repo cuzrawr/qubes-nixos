@@ -30,6 +30,7 @@ Installed tools do not grant cross-qube access:
 | --- | --- |
 | `services.qubes.enable` | Keep enabled; disabling removes the boot/guest integration |
 | `boot.kernel.enable`, `boot.initrd.enable` | Keep `false`; dom0 provides the kernel, initramfs and matching modules |
+| Qubes `kernel` and `virt_mode` properties | Use a Qubes-provided VM kernel and PVH; booting a kernel from the guest is not configured |
 | Extra kernel modules / guest kernel settings | Nix-built modules may not match the Qubes kernel; select/update the kernel through Qubes and use its matching modules |
 | Root filesystem and `/rw` devices | Qubes supplies `dmroot` and `xvdb`; do not replace with host block devices |
 | `/nix` persistence | Keep on template root; a shared writable or home-backed store changes isolation and rollback behavior |
@@ -52,6 +53,7 @@ Installed tools do not grant cross-qube access:
 | `nixos-rebuild build` | Builds a generation; does not switch running services |
 | `nixos-rebuild test` | Activates for testing; does not select it as the next boot generation |
 | `nixos-rebuild switch` | Builds, activates and selects the generation for later boots |
+| `nix shell` or `nix run` in an AppVM | Works for temporary use; newly downloaded store objects disappear when its root resets |
 | Failed evaluation/build | Previous running generation remains; downloaded objects may remain until GC |
 | Failed service activation | Can leave partially changed running services; inspect errors and roll back |
 | Rollback | Restores a retained generation; does not revert source edits or application data |

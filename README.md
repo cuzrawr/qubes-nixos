@@ -205,6 +205,7 @@ qvm-run --service nixos-26.05-xfce qubes.InstallUpdatesGUI
 ```
 
 - Closing the window leaves the update running.
+- Wait for "Update applied" before shutting down the template.
 - Progress: `sudo journalctl -fu qubes-nixos-update` in the template.
 - Central Qubes updater: no NixOS backend; use these commands/RPC.
 - Failed evaluation/build: running generation stays available.

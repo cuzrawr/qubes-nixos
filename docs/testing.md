@@ -1,7 +1,7 @@
 # Test results
 
-Development status: no published binary release. Final RPM acceptance is
-incomplete. Earlier integration results do not certify an untested release.
+Candidate v0.1.0: final installation through the published repository is pending.
+Build source: [155d51a](https://github.com/cuzrawr/qubes-nixos/commit/155d51ab251e01c484949adeb064734ecd919711), signed tag `v0.1.0`.
 
 ## Test targets
 
@@ -69,13 +69,36 @@ The audio permission test used synthetic input. Guest power-hook tests do not
 establish physical system suspend/resume coverage. Device tests used read-only
 data access or synthetic devices.
 
+## Unstable integration coverage
+
+The pinned 26.11 configuration also passed:
+
+- Native template installation and exact embedded-source verification.
+- Repeated TemplateVM/AppVM startup, zero failed system/user units, HTTPS and
+  networkless-template UpdatesProxy.
+- AppVM persistence, root reset and template-generation propagation.
+- Native update GUI/RPC, dotted configuration names, ordinary input overrides,
+  unchanged lock file during update checks, failed-update notification and rollback.
+- Clipboard and file copying in both directions between stable and unstable.
+- Read-only block export, USB mass-storage attachment and synthetic input forwarding.
+- Audio playback, synthetic microphone attachment and revocation. After revocation,
+  the first 20 ms contained previously buffered audio; a new tone was not delivered.
+- Network-provider routing and native firewall deny/recovery.
+- Encrypted Qubes backup/restore with preserved private data.
+- Disposable isolation, image/PDF conversion and disposable GUI editing.
+- Split GPG 2 signing/decryption with no client export of private keys.
+- Firefox through native StartApp, PDF opening in Atril and an Xorg session.
+
+Tests used the same default system closure included in the final source build.
+The custom update options were additionally activated and exercised in the guest.
+The signed binary release and published-repository round trip are checked separately.
+
 ## Remaining release checks
 
 - Complete fresh installations and full runtime acceptance for both variants.
 - Repeat normal startup serially: one concurrent install/start test exceeded
   the default qrexec startup timeout; a retry succeeded. The cause is not yet
   isolated, and the timeout has not been increased.
-- Complete unstable update, rollback and cross-qube desktop/device tests.
 - Verify installation through the published GitHub-backed template repository.
 
 ## Journal diagnostics
@@ -99,7 +122,7 @@ See [adaptations and upstream proposals](adaptations.md) for causes and scope.
 | Measurement | Stable | Unstable |
 | --- | --- | --- |
 | System closure, NAR data | 5.347 GiB | 5.434 GiB |
-| Pre-release compressed signed RPM | 1.415 GiB | 1.436 GiB |
+| Compressed signed RPM | 1.410 GiB | 1.438 GiB |
 
 Closure size is not allocated disk usage. Native compression, debug stripping,
 documentation selection and one MBROLA voice per language reduce size without

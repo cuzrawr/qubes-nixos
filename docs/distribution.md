@@ -53,7 +53,7 @@ After signing into `artifacts/`, enter the publishing shell:
 ```sh
 nix develop .#release
 (cd artifacts && sha256sum *.rpm > SHA256SUMS)
-gpg --armor --detach-sign artifacts/SHA256SUMS
+gpg --local-user YOUR_KEY_FINGERPRINT --armor --detach-sign artifacts/SHA256SUMS
 gh release create v0.1.0 --draft --verify-tag \
   --title 'NixOS templates v0.1.0' --notes-file release-notes.txt \
   artifacts/*.rpm artifacts/template-key.asc artifacts/SHA256SUMS artifacts/SHA256SUMS.asc
@@ -78,7 +78,7 @@ cp artifacts/*.rpm artifacts/rpm-repo/
 createrepo_c \
   --baseurl https://github.com/cuzrawr/qubes-nixos/releases/download/v0.1.0/ \
   artifacts/rpm-repo
-gpg --armor --detach-sign artifacts/rpm-repo/repodata/repomd.xml
+gpg --local-user YOUR_KEY_FINGERPRINT --armor --detach-sign artifacts/rpm-repo/repodata/repomd.xml
 ```
 
 Copy only `repodata/` into `repository/rpm/r4.3/x86_64/`, together with the public
