@@ -1,6 +1,7 @@
 # Test results
 
-Candidate v0.1.0: final installation through the published repository is pending.
+Release [v0.1.0](https://github.com/cuzrawr/qubes-nixos/releases/tag/v0.1.0).
+Final artifact checks: 2026-10-07.
 Build source: [155d51a](https://github.com/cuzrawr/qubes-nixos/commit/155d51ab251e01c484949adeb064734ecd919711), signed tag `v0.1.0`.
 
 ## Test targets
@@ -10,10 +11,8 @@ Build source: [155d51a](https://github.com/cuzrawr/qubes-nixos/commit/155d51ab25
 | Qubes OS / Xen | 4.3.1 / 4.19.4, x86_64 |
 | Stock Qubes VM kernel | `6.18.31-1.qubes.fc41.x86_64`, matching initramfs/modules |
 | Stable nixpkgs | `5e2305d577ca00acbba631b05cb1094d172b29f3` (26.05) |
-| Unstable nixpkgs | `e94cb152ed51bd6e24eb4a41f1460252beb52cd2` (development 26.11) |
+| Unstable nixpkgs | `e94cb152ed51bd6e24eb4a41f1460252beb52cd2` (26.11) |
 | Build tool | Nix 2.32.1; image finalization also tested without KVM |
-
-Unstable results apply to the pinned snapshot, not a released NixOS 26.11.
 
 ## Build and boot checks
 
@@ -30,7 +29,8 @@ Unstable results apply to the pinned snapshot, not a released NixOS 26.11.
 | Normal TemplateVM/AppVM startup; zero failed system/user units | Pass | Pass |
 | AppVM second boot, private persistence and discarded root changes | Pass | Pass |
 | Networkless template UpdatesProxy and AppVM HTTPS | Pass | Pass |
-| Complete release runtime acceptance | Pending | Pending |
+| Published repository installation | Pass: Template Manager GUI | Pass: `qvm-template` CLI |
+| AppVM private data preserved through template delete/install | Pass | Pass |
 
 Wrong-key verification rejected the RPM; verification with the matching public
 key accepted it. Diagnostic boot assertions are in
@@ -39,8 +39,7 @@ and must not be distributed as normal templates.
 
 ## Stable integration coverage
 
-These checks passed on the integrated stable configuration. Repeat the required
-checks against each final release artifact; unstable coverage is not implied.
+Coverage of the stable system closure included in v0.1.0:
 
 | Area | Checks completed |
 | --- | --- |
@@ -77,6 +76,7 @@ The pinned 26.11 configuration also passed:
 - Repeated TemplateVM/AppVM startup, zero failed system/user units, HTTPS and
   networkless-template UpdatesProxy.
 - AppVM persistence, root reset and template-generation propagation.
+- Native root/private-volume growth, preserved data and filesystem expansion.
 - Native update GUI/RPC, dotted configuration names, ordinary input overrides,
   unchanged lock file during update checks, failed-update notification and rollback.
 - Clipboard and file copying in both directions between stable and unstable.
@@ -88,18 +88,27 @@ The pinned 26.11 configuration also passed:
 - Disposable isolation, image/PDF conversion and disposable GUI editing.
 - Split GPG 2 signing/decryption with no client export of private keys.
 - Firefox through native StartApp, PDF opening in Atril and an Xorg session.
+- Native dom0 update check through the NixOS UpdateVM; no dom0 packages installed.
 
-Tests used the same default system closure included in the final source build.
-The custom update options were additionally activated and exercised in the guest.
-The signed binary release and published-repository round trip are checked separately.
+Tests used the default system closures included in the release. Custom update
+options were also activated and exercised in the guest. Final RPM installations
+verified all 58 embedded source files against the signed build commit.
 
-## Remaining release checks
+## Published repository checks
 
-- Complete fresh installations and full runtime acceptance for both variants.
-- Repeat normal startup serially: one concurrent install/start test exceeded
-  the default qrexec startup timeout; a retry succeeded. The cause is not yet
-  isolated, and the timeout has not been increased.
-- Verify installation through the published GitHub-backed template repository.
+- Stable installed through Qubes Template Manager; unstable through `qvm-template`.
+- Downloads through NixOS UpdateVMs with metadata and RPM signature checks enabled.
+- Signed checksums verified with the public key; both RPM digests match the
+  published GitHub assets.
+- Both templates and AppVMs booted repeatedly with the expected generations,
+  working guest agents, Xorg and zero failed system/user units.
+- Existing AppVM home and `/usr/local` files survived the delete/install cycle.
+
+## Startup under load
+
+One concurrent install/start test exceeded the default qrexec startup timeout.
+Final serial installations and repeated boots passed with the default timeout.
+The concurrent timeout's cause remains unresolved.
 
 ## Journal diagnostics
 

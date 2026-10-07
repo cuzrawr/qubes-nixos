@@ -14,8 +14,7 @@ therefore controls the handoff, not just whether an extra image is built.
 
 NixOS 26.05 deprecates scripted stage 1 for removal in 26.11. It does not
 deprecate initramfs generally or the external stage-2 entry point used here.
-Stable and pinned unstable are tested separately; a development snapshot does
-not establish compatibility with a future release.
+Stable and pinned unstable are tested separately.
 
 External modules live at `/lib/modules`. The condition on
 `kmod-static-nodes.service` follows that directory so normal kmod and tmpfiles
@@ -172,5 +171,5 @@ listed in [adaptations](docs/adaptations.md).
 Check both stable and pinned unstable on Qubes, including installation, repeated
 boot, guest agents, GUI, clipboard, file transfer, audio, persistence, storage
 growth, disposable isolation, networking, device roles, updates and rollback.
-Evaluation and boot alone do not establish feature parity. Completed and pending
-checks are listed in [test results](docs/testing.md).
+Evaluation and boot alone do not establish feature parity. Coverage and limits
+are listed in [test results](docs/testing.md).

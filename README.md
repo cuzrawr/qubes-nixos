@@ -29,19 +29,20 @@ sudo install -Dm644 qubes-nixos.repo /etc/qubes/repo-templates/qubes-nixos.repo
 qvm-template-gui
 ```
 
-3. Refresh repository data. Select `nixos-26.05-xfce` (stable) or
-   `nixos-unstable-xfce` (development), then Install.
+3. Refresh repository data. Select `nixos-26.05-xfce` or
+   `nixos-unstable-xfce`, then Install. Wait until it appears under
+   Installed templates; downloading and importing can take several minutes.
 4. Create an AppVM in Qubes Manager, choose the installed template, then launch
    Firefox or XFCE Terminal from that qube's application menu.
 
-Later installations use the GUI directly. No dom0 networking is needed.
+Later installations use the GUI directly.
 This is a third-party repository, separate from Qubes' official community list.
 
 - Configuration: ordinary writable NixOS flake in `/etc/nixos`.
 - Source: [GitHub](https://github.com/cuzrawr/qubes-nixos).
 - Version coverage and known limitations: [test results](docs/testing.md).
 - Signed binaries: [GitHub Releases](https://github.com/cuzrawr/qubes-nixos/releases).
-- License: integration code unlicensed for now; upstream licenses unchanged.
+- License: integration code unlicensed; upstream licenses unchanged.
 
 [Source checks](https://github.com/cuzrawr/qubes-nixos/actions/workflows/check.yml) |
 [Debian/Fedora comparison](docs/comparison.md)
@@ -51,7 +52,7 @@ This is a third-party repository, separate from Qubes' official community list.
 | Variant | Template name | Build output | Configuration | Update input |
 | --- | --- | --- | --- | --- |
 | Stable 26.05 | `nixos-26.05-xfce` | `template-rpm` | `nixos` | `nixpkgs` |
-| Development 26.11 | `nixos-unstable-xfce` | `template-rpm-unstable` | `nixos-unstable` | `nixpkgs-unstable` |
+| Unstable 26.11 | `nixos-unstable-xfce` | `template-rpm-unstable` | `nixos-unstable` | `nixpkgs-unstable` |
 
 | Kernel/initrd variant | Availability |
 | --- | --- |
@@ -59,7 +60,6 @@ This is a third-party repository, separate from Qubes' official community list.
 | NixOS kernel or NixOS-built initrd | Not provided |
 | NixOS deprecated scripted stage 1 | Not used |
 
-Unstable is a pinned development snapshot, not released NixOS 26.11.
 Exact revisions: [flake.lock](flake.lock). Boot rationale: [WHY.md](WHY.md).
 
 ## 1. Install and remove
@@ -117,8 +117,6 @@ qvm-template --keyring ./template-key.asc install "./$rpm"
 
 [Repository setup and GitHub hosting](docs/distribution.md).
 The GUI uses configured repositories; it does not add arbitrary URLs.
-No dom0 network access is required. This project is not in Qubes' official
-community repository.
 
 ### Remove
 
@@ -232,6 +230,9 @@ Shut down the template and restart its AppVMs afterward.
 | Increase root space, in dom0 | `qvm-volume resize TEMPLATE:root SIZE` |
 | Builder cleanup | Remove obsolete `result-*` links, then `nix-store --gc` |
 | Backups | Include TemplateVM configuration and AppVM data in native Qubes backups |
+
+Check free space in dom0's storage pool as well as inside the guest. Increasing
+a volume's size does not add physical disk space.
 
 Updating nixpkgs does not update this integration or pinned Qubes components.
 [Integration updates, release upgrades and recovery](docs/recovery.md).

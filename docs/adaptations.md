@@ -53,7 +53,7 @@ interpreters, file-copy privilege and device backends. See [test coverage](testi
 
 ## Suggested upstream work
 
-These are proposed upstream improvements, not patches applied by this repository.
+These proposals are not applied as patches.
 
 ### NixOS: duplicate D-Bus service registration
 
@@ -85,7 +85,7 @@ DNF 5.4.2.1's parallel repository download handling recognizes a missing key by
 the RPM backend's `Signing key not found` message. Librepo 1.20.0's GPGME backend
 returns `Bad GPG signature` for that case. A fresh signed repository fails before
 DNF imports its configured key, even when GnuPG independently verifies the
-signature. Use a structured error code shared by both backends. Our packaging
+signature. Use a structured error code shared by both backends. The package
 selects the existing RPM backend with `USE_GPGME=OFF` and keeps verification on.
 
 Sources: [DNF error handling](https://github.com/rpm-software-management/dnf5/blob/5.4.2.1/libdnf5/repo/repo_sack.cpp),

@@ -21,6 +21,5 @@ Target: Qubes 4.3. See [tested versions and results](testing.md).
 | Menu icons | Some upstream GraphicsMagick conversions fail; entries still launch | Distribution icon handling |
 | Support scope | Versions and checks listed in the test record | Qubes-supported distribution releases |
 
-No claim of complete parity: the central updater and some menu icons remain
-documented gaps. Existing Debian/Fedora AppVMs do not become NixOS AppVMs merely
-by changing their template; create a new qube and migrate application data.
+For Debian/Fedora AppVMs, create a new NixOS qube and migrate application data.
+Changing the template alone does not migrate distribution-specific settings.

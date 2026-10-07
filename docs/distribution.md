@@ -12,7 +12,7 @@ release asset with different bytes.
 
 The upstream template RPM spec supplies a GPLv3+ package label. The contained
 components retain their own licenses; this repository's integration source has
-no license grant yet.
+no license grant.
 
 Keep private keys outside the repository, build inputs and template. Use a
 dedicated `GNUPGHOME` for all signing commands below.
@@ -119,8 +119,7 @@ qvm-template --repoid=qubes-nixos install nixos-26.05-xfce
 ```
 
 Use `nixos-unstable-xfce` for unstable. Qubes Template Manager can then use the
-configured repository too. Downloads run through the normal UpdateVM. Do not
-enable dom0 networking for this.
+configured repository too. Downloads run through the normal UpdateVM.
 
 For a one-time repository selection, keep the key in the same key directory and
 use the downloaded `.repo` file without installing it:

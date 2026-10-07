@@ -61,6 +61,7 @@ Installed tools do not grant cross-qube access:
 | Store GC | Deletes unreferenced store objects, not arbitrary home files |
 | Delete old generations | Removes rollback choices and permits collecting their exclusive dependencies |
 | `result-*` symlinks | Keep build outputs alive until removed |
+| Qubes volume resize | Raises guest capacity; does not increase free space in dom0's storage pool |
 | Automatic cleanup thresholds | 1 GiB minimum, 3 GiB target; cannot free live generations or guarantee a large build fits |
 | `auto-optimise-store` | Hard-links identical store files; does not delete generations |
 | Documentation/voice selection | Manual pages and one MBROLA voice per language retained; editable in `configuration.nix` |
