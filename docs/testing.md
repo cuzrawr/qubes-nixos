@@ -107,8 +107,26 @@ verified all 58 embedded source files against the signed build commit.
   working guest agents, Xorg and zero failed system/user units.
 - Existing AppVM home and `/usr/local` files survived the delete/install cycle.
 
+## Store integrity and entry points
+
+Both release AppVMs passed `nix-store --verify --check-contents` after store
+optimisation. On each variant, the path audit checked 63 script interpreters
+and 52 RPC entries. Executable handlers, native TCP targets and optional policy
+sockets matched their expected forms. No guest changes were needed.
+
 ## Startup under load
 
+Three paired AppVM starts passed with unmodified Qubes defaults: 400 MiB initial
+RAM, 4000 MiB maximum, 2 vCPUs and a 60-second qrexec timeout.
+
+| Check | Stable | Unstable |
+| --- | --- | --- |
+| `qvm-start` completion, three runs | 17.23, 15.38, 16.11 seconds | 19.65, 19.14, 19.26 seconds |
+| Failed system/user units after startup | 0 / 0 | 0 / 0 |
+| Private persistence and root reset after restart | Pass | Pass |
+| Kernel OOM/allocation-failure messages | None observed | None observed |
+
+These checks cover simultaneous AppVM starts, not a concurrent template import.
 One concurrent install/start test exceeded the default qrexec startup timeout.
 Final serial installations and repeated boots passed with the default timeout.
 The concurrent timeout's cause remains unresolved.
@@ -154,10 +172,17 @@ message. No failure codes are suppressed or reclassified as success.
 | --- | --- | --- |
 | System closure, NAR data | 5.347 GiB | 5.434 GiB |
 | Compressed signed RPM | 1.410 GiB | 1.438 GiB |
+| `nix-store --optimise` saving reported in a release AppVM | 73.0 MiB | 60.7 MiB |
 
 Closure size is not allocated disk usage. Native compression, debug stripping,
 documentation selection and one MBROLA voice per language reduce size without
 removing the default applications or Qubes roles.
+
+Full store optimisation retained the same system generations and packages.
+This measures deduplication of existing files, not a smaller replacement RPM.
+For a lasting saving, run it in the TemplateVM and restart dependent AppVMs
+after shutting the template down. The image builder's copy step is covered in
+[upstream proposals](adaptations.md#nixos-image-builder-preserve-hard-links).
 
 The size audit traced RPM's compiler dependency to its build macros. GCC and
 its exclusive dependencies account for about 301 MiB in each closure. The

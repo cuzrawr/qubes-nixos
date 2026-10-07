@@ -224,6 +224,7 @@ Shut down the template and restart its AppVMs afterward.
 | Maintenance | Policy/command |
 | --- | --- |
 | Deduplication | Enabled during store insertion |
+| Deduplicate existing files | `sudo nix-store --optimise` in the TemplateVM; keeps every package and generation |
 | Automatic GC during builds | Below 1 GiB free; target 3 GiB; retained generations protected |
 | Collect unreferenced objects | `sudo nix-store --gc` |
 | Delete old rollback choices, after checking replacements | `sudo nix-collect-garbage --delete-older-than 30d` |

@@ -60,6 +60,23 @@ Reinstallation replaces root, including `/etc/nixos` and root-installed software
 It does not reset existing AppVM private data. Reapply reviewed custom settings
 after confirming the base template works.
 
+## Install a newer template RPM
+
+Follow the same backup and shutdown steps above. When a newer RPM is published,
+select it in Qubes Template Manager, or run in dom0:
+
+```sh
+qvm-template --repoid=qubes-nixos --refresh upgrade nixos-26.05-xfce
+# Or: qvm-template --repoid=qubes-nixos --refresh upgrade nixos-unstable-xfce
+```
+
+This replaces template root, including custom `/etc/nixos` changes. Existing
+AppVM private data remains. Use the README's in-template NixOS update procedure
+to retain and rebuild your configuration instead. A smaller replacement image
+does not remove retained Qubes volume revisions.
+
+Source: [native template commands](https://doc.qubes-os.org/projects/core-admin-client/en/latest/manpages/qvm-template.html).
+
 ## Complete delete/install cycle
 
 Use this when replacement through `reinstall` is unsuitable. Keep AppVMs halted

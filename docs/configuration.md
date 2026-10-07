@@ -64,8 +64,15 @@ Installed tools do not grant cross-qube access:
 | Qubes volume resize | Raises guest capacity; does not increase free space in dom0's storage pool |
 | Automatic cleanup thresholds | 1 GiB minimum, 3 GiB target; cannot free live generations or guarantee a large build fits |
 | `auto-optimise-store` | Hard-links identical store files; does not delete generations |
+| `nix-store --optimise` | Deduplicates existing files, including those copied into the initial image; does not remove software or rollback choices |
 | Documentation/voice selection | Manual pages and one MBROLA voice per language retained; editable in `configuration.nix` |
 
 Update large package sets with sufficient root space and RAM. Prefer cached
 builds; source builds of large applications can need much more than ordinary
 desktop use. Use Qubes Settings to grow the template's root volume or memory.
+
+Run maintenance in the TemplateVM, then shut it down and restart dependent
+AppVMs. Store optimisation can take several minutes. In an AppVM, the saving
+is lost when its root resets. Filesystem savings, compressed RPM size and dom0
+pool usage are different measurements; retained Qubes volume revisions can
+still occupy space.

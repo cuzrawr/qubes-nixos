@@ -55,6 +55,18 @@ interpreters, file-copy privilege and device backends. See [test coverage](testi
 
 These proposals are not applied as patches.
 
+### NixOS image builder: preserve hard links
+
+The pinned image builder populates ext4 with LKL `cptofs`, which copies regular
+files separately without retaining their hard-link relationships. Enabling
+Nix deduplication before that copy does not preserve the saving in the image.
+Preserve hard links in the copy step or provide a native finalisation hook.
+The integration keeps the stock builder; installed templates can use
+`nix-store --optimise` without changing software or generations.
+
+Sources: [NixOS image builder](https://github.com/NixOS/nixpkgs/blob/5e2305d577ca00acbba631b05cb1094d172b29f3/nixos/lib/make-disk-image.nix),
+[LKL copy implementation](https://github.com/lkl/linux/blob/9c51103caa1481493ebbbaf858f016e7f25ab921/tools/lkl/cptofs.c).
+
 ### Nixpkgs: RPM runtime and build dependencies
 
 RPM's generated build macros refer to absolute compiler paths. The UpdateVM
