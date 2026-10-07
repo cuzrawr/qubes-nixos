@@ -1,6 +1,6 @@
 # GitHub Free
 
-Checked against GitHub documentation on 2026-09-30. Repository visibility: public.
+Checked against GitHub documentation on 2026-10-07. Repository visibility: public.
 
 ## CI
 
@@ -55,8 +55,8 @@ Sources: [runner limits](https://docs.github.com/en/actions/reference/runners/gi
 
 ## If the repository becomes private
 
-GitHub Free currently includes 2,000 hosted-runner minutes/month, 500 MB of
-artifact storage and 10 GB of cache storage per repository. Standard public
-runner minutes are free; larger runners are paid. Pages on GitHub Free requires
+GitHub Free currently includes 2,000 hosted-runner minutes/month and 500 MB of
+artifact storage per account, plus 10 GB of cache storage per repository.
+Standard public runner minutes are free; larger runners are paid. Pages on GitHub Free requires
 a public repository. [Billing](https://docs.github.com/en/billing/concepts/product-billing/github-actions),
 [plan features](https://docs.github.com/en/get-started/learning-about-github/githubs-plans).

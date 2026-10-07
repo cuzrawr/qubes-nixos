@@ -62,7 +62,7 @@ profile and individual package directories. D-Bus broker reports duplicate
 names at error priority, although the services activate. This is tracked in
 [nixpkgs issue 303078](https://github.com/NixOS/nixpkgs/issues/303078) and
 [PR 549241](https://github.com/NixOS/nixpkgs/pull/549241), still open when checked
-on 2026-09-30. Removing automatic discovery affects other NixOS modules, so this
+on 2026-10-07. Removing automatic discovery affects other NixOS modules, so this
 repository does not copy the pending change or filter the messages.
 
 ### Qubes: graphical seat setup on declarative systems

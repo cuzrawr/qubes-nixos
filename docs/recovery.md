@@ -21,7 +21,7 @@ On an x86_64 Linux builder with Nix and Git:
 ```sh
 git clone https://github.com/cuzrawr/qubes-nixos qubes-nixos-recovery
 cd qubes-nixos-recovery
-git switch --detach SOURCE_COMMIT
+git switch --detach v0.1.0
 
 # Stable
 nix build .#template-rpm -o result-stable
@@ -30,7 +30,7 @@ nix build .#template-rpm -o result-stable
 nix build .#template-rpm-unstable -o result-unstable
 ```
 
-Choose `SOURCE_COMMIT` from the matching [test/release record](testing.md).
+Use the tag or source commit from the matching [test/release record](testing.md).
 Keep `flake.lock`; do not update inputs while reproducing that version.
 [Sign the RPM](distribution.md#sign-a-local-build), then transfer it and the
 public key to dom0 using the README commands.
@@ -40,7 +40,14 @@ public key to dom0 using the README commands.
 1. Back up the TemplateVM and dependent AppVMs with Qubes Backup.
 2. Save custom `/etc/nixos` changes outside the template.
 3. Shut down the template and all its dependent qubes.
-4. In dom0, reinstall the matching signed RPM:
+4. In dom0, reinstall from the configured repository:
+
+```sh
+qvm-template --repoid=qubes-nixos --refresh reinstall nixos-26.05-xfce
+# Or: qvm-template --repoid=qubes-nixos --refresh reinstall nixos-unstable-xfce
+```
+
+Alternatively, use the matching downloaded or locally built signed RPM:
 
 ```sh
 qvm-template --keyring ./template-key.asc reinstall ./TEMPLATE.rpm

@@ -3,6 +3,40 @@
 NixOS TemplateVMs for Qubes OS 4.3, x86_64. Upstream guest tools, Xorg, XFCE
 applications, Firefox, native clipboard, file transfer, devices and audio.
 
+## Fast template launch procedure
+
+Use Qubes' official Template Manager. One-time setup for Qubes 4.3.
+
+1. In a networked qube, download
+   [the repository file](https://cuzrawr.github.io/qubes-nixos/qubes-nixos.repo) and
+   [the public key](https://cuzrawr.github.io/qubes-nixos/RPM-GPG-KEY-qubes-nixos)
+   into `Downloads`.
+2. In dom0, replace `DOWNLOAD_QUBE` with that qube's name:
+
+```sh
+qvm-run --pass-io DOWNLOAD_QUBE 'cat ~/Downloads/qubes-nixos.repo' > qubes-nixos.repo
+qvm-run --pass-io DOWNLOAD_QUBE 'cat ~/Downloads/RPM-GPG-KEY-qubes-nixos' > RPM-GPG-KEY-qubes-nixos
+gpg --show-keys --with-fingerprint RPM-GPG-KEY-qubes-nixos
+```
+
+Check the fingerprint:
+`4B90 5004 6403 DDD1 B6F1 FCF7 A752 8E30 ED60 389C`.
+Then install the two files:
+
+```sh
+sudo install -Dm644 RPM-GPG-KEY-qubes-nixos /etc/qubes/repo-templates/keys/RPM-GPG-KEY-qubes-nixos
+sudo install -Dm644 qubes-nixos.repo /etc/qubes/repo-templates/qubes-nixos.repo
+qvm-template-gui
+```
+
+3. Refresh repository data. Select `nixos-26.05-xfce` (stable) or
+   `nixos-unstable-xfce` (development), then Install.
+4. Create an AppVM in Qubes Manager, choose the installed template, then launch
+   Firefox or XFCE Terminal from that qube's application menu.
+
+Later installations use the GUI directly. No dom0 networking is needed.
+This is a third-party repository, separate from Qubes' official community list.
+
 - Configuration: ordinary writable NixOS flake in `/etc/nixos`.
 - Source: [GitHub](https://github.com/cuzrawr/qubes-nixos).
 - Version coverage and known limitations: [test results](docs/testing.md).
@@ -30,40 +64,9 @@ Exact revisions: [flake.lock](flake.lock). Boot rationale: [WHY.md](WHY.md).
 
 ## 1. Install and remove
 
-### Install with Qubes Template Manager
+### Repository CLI
 
-One-time setup for Qubes 4.3, after the signed release is published.
-
-1. In a networked qube, download
-   [the repository file](https://cuzrawr.github.io/qubes-nixos/qubes-nixos.repo) and
-   [the public key](https://cuzrawr.github.io/qubes-nixos/RPM-GPG-KEY-qubes-nixos)
-   into `Downloads`.
-2. In dom0, replace `DOWNLOAD_QUBE` with that qube's name:
-
-```sh
-qvm-run --pass-io DOWNLOAD_QUBE 'cat ~/Downloads/qubes-nixos.repo' > qubes-nixos.repo
-qvm-run --pass-io DOWNLOAD_QUBE 'cat ~/Downloads/RPM-GPG-KEY-qubes-nixos' > RPM-GPG-KEY-qubes-nixos
-gpg --show-keys --with-fingerprint RPM-GPG-KEY-qubes-nixos
-```
-
-Check the fingerprint:
-`4B90 5004 6403 DDD1 B6F1 FCF7 A752 8E30 ED60 389C`.
-Then install the two files:
-
-```sh
-sudo install -Dm644 RPM-GPG-KEY-qubes-nixos /etc/qubes/repo-templates/keys/RPM-GPG-KEY-qubes-nixos
-sudo install -Dm644 qubes-nixos.repo /etc/qubes/repo-templates/qubes-nixos.repo
-qvm-template-gui
-```
-
-3. Refresh repository data. Select `nixos-26.05-xfce` (stable) or
-   `nixos-unstable-xfce` (development), then Install.
-4. Create an AppVM in Qubes Manager and choose the installed template.
-
-Later installations use the GUI directly. No dom0 networking is needed.
-This is a third-party repository, separate from Qubes' official community list.
-
-CLI after the same one-time setup:
+After the [one-time GUI setup](#fast-template-launch-procedure):
 
 ```sh
 qvm-template --repoid=qubes-nixos --refresh install nixos-26.05-xfce
