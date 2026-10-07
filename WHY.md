@@ -156,6 +156,12 @@ references. Keep manual pages, omit separate developer/Info documentation, and
 use one MBROLA voice per language. Desktop applications and Qubes roles remain
 available through the normal configuration.
 
+Retain the stock RPM package for UpdateVM support. Its build macros keep a
+compiler in the closure. Removing that dependency requires changing the
+package's tool lookup or separating its build and runtime outputs upstream.
+The integration does neither. Users who do not need the UpdateVM role can
+disable that role through its existing NixOS option.
+
 Enable native Nix deduplication and collect unreferenced paths below 1 GiB free,
 targeting 3 GiB. Keep generation deletion manual. Every retained generation
 remains a GC root; automatic cleanup cannot reclaim its live dependencies or
@@ -167,6 +173,10 @@ Require zero failed system and user units after successful operations.
 Document upstream journal diagnostics without filtering them or counting them
 as passed integration checks. Known issues and possible upstream changes are
 listed in [adaptations](docs/adaptations.md).
+
+Inspect shutdown consoles separately. Record transient failed units as well as
+the final filesystem teardown result; a clean next boot does not erase those
+diagnostics. The test record includes comparisons with stock Qubes guests.
 
 Check both stable and pinned unstable on Qubes, including installation, repeated
 boot, guest agents, GUI, clipboard, file transfer, audio, persistence, storage

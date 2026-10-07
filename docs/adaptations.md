@@ -55,6 +55,18 @@ interpreters, file-copy privilege and device backends. See [test coverage](testi
 
 These proposals are not applied as patches.
 
+### Nixpkgs: RPM runtime and build dependencies
+
+RPM's generated build macros refer to absolute compiler paths. The UpdateVM
+helpers need RPM for repository and package handling, but inherit about
+301 MiB of compiler dependencies on both pins. Separate RPM's build tools and
+compiler-dependent defaults from its query and verification runtime, retaining
+the macros DNF needs. The integration keeps the stock package rather than
+redirecting compiler commands through PATH or deleting installed files.
+
+Sources: [nixpkgs RPM package](https://github.com/NixOS/nixpkgs/blob/5e2305d577ca00acbba631b05cb1094d172b29f3/pkgs/tools/package-management/rpm/default.nix),
+[upstream macro configuration](https://github.com/rpm-software-management/rpm/blob/rpm-4.20.1-release/CMakeLists.txt).
+
 ### NixOS: duplicate D-Bus service registration
 
 The pinned NixOS module exposes D-Bus services through both the merged system
@@ -78,6 +90,22 @@ A suitable upstream interface would allow an already configured graphical seat
 or a runtime-only attachment. The integration does not make the udev rules tree
 writable or modify the command's behavior. Native GUI, clipboard and input tests
 remain separate from this startup diagnostic.
+
+### Qubes/systemd: shutdown of external module mounts
+
+The first shutdown unmount of the externally supplied module filesystem can
+fail because udev still maps its index files. Final systemd teardown releases
+those mappings and unmounts successfully. This occurs in the tested NixOS,
+Fedora and Debian guests. Coordinate the external mount's shutdown lifetime
+with udev; keep device handling available until it is no longer needed.
+
+The Qubes GUI agent can also return status 1 during orderly shutdown, including
+in the Fedora comparison guest. Upstream should distinguish orderly session
+termination from a running-session failure. Treating every status 1 as success
+would hide real faults. Neither behavior is patched here.
+
+See [shutdown coverage](testing.md#shutdown). Running-unit checks and complete
+shutdown-console checks are separate results.
 
 ### DNF and librepo: missing repository keys with GPGME
 

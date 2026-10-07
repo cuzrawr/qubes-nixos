@@ -266,5 +266,6 @@ registration, graphical-seat setup, and DNF/librepo key handling.
 [Details and references](docs/adaptations.md#suggested-upstream-work).
 
 Known limitations: missing icons for some XFCE entries; documented upstream
-journal messages. Acceptance requires zero failed system and user units.
+journal and [shutdown diagnostics](docs/testing.md#shutdown). Running-system
+checks require zero failed system and user units.
 [GitHub Free: CI and distribution options](docs/github.md).

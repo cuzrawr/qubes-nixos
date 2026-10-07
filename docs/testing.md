@@ -61,7 +61,8 @@ Coverage of the stable system closure included in v0.1.0:
 | RPC clients | Synchronous and asynchronous Python calls to native `qubes.GetDate` |
 | UpdateVM | Signed repository query/download, rejection of altered metadata, verified RPM download and dom0 update check |
 | Optional roles | UpdateVM and NetworkManager disabled configurations boot without failed units; disabled UpdateVM removes its helper link and RPCs |
-| Maintenance settings | Native deduplication and 1 GiB/3 GiB cleanup thresholds enabled; no automatic generation-deletion timer |
+| Store maintenance | Identical files share storage; GC removes unreferenced objects while preserving rooted objects and every system generation; zero failed units afterward |
+| Maintenance settings | Native 1 GiB/3 GiB cleanup thresholds enabled; no automatic generation-deletion timer |
 | Guest power hooks | Suspend/resume preparation RPCs complete; networking works afterward |
 
 The audio permission test used synthetic input. Guest power-hook tests do not
@@ -77,6 +78,8 @@ The pinned 26.11 configuration also passed:
   networkless-template UpdatesProxy.
 - AppVM persistence, root reset and template-generation propagation.
 - Native root/private-volume growth, preserved data and filesystem expansion.
+- Automatic store deduplication and garbage collection with all system
+  generations preserved; zero failed system/user units afterward.
 - Native update GUI/RPC, dotted configuration names, ordinary input overrides,
   unchanged lock file during update checks, failed-update notification and rollback.
 - Clipboard and file copying in both directions between stable and unstable.
@@ -126,6 +129,25 @@ operations. Upstream diagnostics remain visible:
 
 See [adaptations and upstream proposals](adaptations.md) for causes and scope.
 
+## Shutdown
+
+Both NixOS variants completed native shutdown and final filesystem teardown.
+The console is not error-free:
+
+- The first attempt to unmount `/lib/modules` reports `target is busy`.
+  `systemd-udevd` still maps module indexes. Late shutdown releases these and
+  unmounts the module filesystem successfully.
+- The same module-mount diagnostic was reproduced in stock Fedora 43 and
+  Debian 13 Qubes guests, at `/usr/lib/modules`.
+- `qubes-gui-agent` sometimes exits with status 1 during shutdown. This was
+  also reproduced in stock Fedora.
+- Shutting down while startup jobs are still running can interrupt those jobs
+  and initially leave `/home` busy. Final teardown still unmounted it.
+
+Zero failed system/user units was verified while running, including after
+updates and maintenance. It does not describe every intermediate shutdown
+message. No failure codes are suppressed or reclassified as success.
+
 ## Size and icons
 
 | Measurement | Stable | Unstable |
@@ -136,6 +158,11 @@ See [adaptations and upstream proposals](adaptations.md) for causes and scope.
 Closure size is not allocated disk usage. Native compression, debug stripping,
 documentation selection and one MBROLA voice per language reduce size without
 removing the default applications or Qubes roles.
+
+The size audit traced RPM's compiler dependency to its build macros. GCC and
+its exclusive dependencies account for about 301 MiB in each closure. The
+stock package is retained. Mesa/LLVM supplies software rendering, and the
+speech packages provide accessibility; these are not unused build leftovers.
 
 GraphicsMagick 1.3.47 and 1.3.48 reject quoted font names in some XFCE SVG icons.
 The same icons pass with 1.3.45. Qubes' unchanged image handler therefore leaves
