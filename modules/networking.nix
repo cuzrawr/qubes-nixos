@@ -33,6 +33,7 @@ in
       dns = "systemd-resolved";
     };
     environment.etc = {
+      "xen/xl.conf".source = "${pkgs.xen}/etc/xen/xl.conf";
       "xen/scripts".source = "${xenScripts}/etc/xen/scripts";
       "tinyproxy/tinyproxy-updates.conf".source = "${q}/etc/tinyproxy/tinyproxy-updates.conf";
       "tinyproxy/updates-blacklist".source = "${q}/etc/tinyproxy/updates-blacklist";

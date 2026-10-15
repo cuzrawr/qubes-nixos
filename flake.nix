@@ -40,36 +40,49 @@
         ];
       };
       mkTemplateSystem =
-        source:
+        {
+          source,
+          profile ? ./configuration.nix,
+          target ? "nixos",
+          input ? "nixpkgs",
+        }:
         source.lib.nixosSystem {
           inherit system;
           modules = [
             self.nixosModules.qubes
-            ./configuration.nix
-            {
+            ./profiles/base.nix
+            profile
+            ({ lib, ... }: {
               # Retain the pinned nixpkgs source for local evaluation after install.
               nix.registry.nixpkgs.flake = source;
               nix.nixPath = [ "nixpkgs=${source}" ];
-            }
+              services.qubes.updates.configuration = lib.mkDefault target;
+              services.qubes.updates.inputs = lib.mkDefault [ input ];
+            })
           ];
         };
-      template = mkTemplateSystem nixpkgs;
+      template = mkTemplateSystem { source = nixpkgs; };
       desktopAppmenus = [
         "firefox.desktop"
         "xfce4-terminal.desktop"
         "thunar.desktop"
         "org.xfce.mousepad.desktop"
       ];
-      templateUnstable = (mkTemplateSystem nixpkgs-unstable).extendModules {
-        modules = [
-          (
-            { lib, ... }:
-            {
-              services.qubes.updates.configuration = lib.mkDefault "nixos-unstable";
-              services.qubes.updates.inputs = lib.mkDefault [ "nixpkgs-unstable" ];
-            }
-          )
-        ];
+      templateUnstable = mkTemplateSystem {
+        source = nixpkgs-unstable;
+        target = "nixos-unstable";
+        input = "nixpkgs-unstable";
+      };
+      minimal = mkTemplateSystem {
+        source = nixpkgs;
+        profile = ./configuration-minimal.nix;
+        target = "nixos-minimal";
+      };
+      minimalUnstable = mkTemplateSystem {
+        source = nixpkgs-unstable;
+        profile = ./configuration-minimal.nix;
+        target = "nixos-unstable-minimal";
+        input = "nixpkgs-unstable";
       };
       imageWithContents =
         configuration: contents:
@@ -128,6 +141,8 @@
         desktop-test = desktop;
         nixos = template;
         nixos-unstable = templateUnstable;
+        nixos-minimal = minimal;
+        nixos-unstable-minimal = minimalUnstable;
       };
 
       packages.${system} = (import ./pkgs { pkgs = stable.pkgs; }) // rec {
@@ -135,14 +150,28 @@
         template-rpm = self.lib.mkTemplate {
           configuration = template;
           name = "nixos-26.05-xfce";
+          release = "2";
           contents = configurationContents;
           appmenus = desktopAppmenus;
         };
         template-rpm-unstable = self.lib.mkTemplate {
           configuration = templateUnstable;
           name = "nixos-unstable-xfce";
+          release = "2";
           contents = configurationContents;
           appmenus = desktopAppmenus;
+        };
+        template-rpm-minimal = self.lib.mkTemplate {
+          configuration = minimal;
+          name = "nixos-26.05-minimal";
+          release = "2";
+          contents = configurationContents;
+        };
+        template-rpm-unstable-minimal = self.lib.mkTemplate {
+          configuration = minimalUnstable;
+          name = "nixos-unstable-minimal";
+          release = "2";
+          contents = configurationContents;
         };
         sign-template = stable.pkgs.writeShellApplication {
           name = "sign-template";

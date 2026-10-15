@@ -1,148 +1,178 @@
 # Architecture
 
+Confidence: high for the pinned sources and recorded tests. Coverage and
+remaining checks: [testing](docs/testing.md), [feature gaps](docs/feature-gaps.md).
+
 ## Boot
 
-Use the stock Qubes PVH kernel, initramfs and matching modules. Set
-`boot.kernel.enable = false` and `boot.initrd.enable = false`; NixOS's
-`boot.loader.initScript` supplies the stage-2 entry point at `/sbin/init`.
-This keeps kernel selection and updates under normal Qubes management.
+| Choice | Reason / constraint |
+| --- | --- |
+| Stock Qubes PVH kernel, initramfs and matching modules | Native kernel selection and updates in Qubes |
+| `boot.kernel.enable = false`, `boot.initrd.enable = false` | Enter NixOS through `boot.loader.initScript` at `/sbin/init`; a foreign initramfs does not run NixOS initrd activation |
+| External modules at `/lib/modules` | Point the `kmod-static-nodes` condition there; retain normal kmod/tmpfiles device creation |
+| No replacement init script or kernel patch | Preserve upstream boot interfaces |
 
-A foreign initramfs does not run NixOS initrd activation services. At the pinned
-nixpkgs revisions, enabling both NixOS initrd options selects a direct systemd
-entry point instead of the stage-2 activation script. Disabling the NixOS initrd
-therefore controls the handoff, not just whether an extra image is built.
+- At the pinned revisions, enabling both NixOS initrd options selects direct
+  systemd entry instead of the required stage-2 activation script.
+- NixOS 26.05 deprecates scripted stage 1 for removal in 26.11. This does not
+  deprecate initramfs generally or the external stage-2 entry point.
+- Test stable and pinned unstable separately; do not infer future compatibility.
 
-NixOS 26.05 deprecates scripted stage 1 for removal in 26.11. It does not
-deprecate initramfs generally or the external stage-2 entry point used here.
-Stable and pinned unstable are tested separately.
-
-External modules live at `/lib/modules`. The condition on
-`kmod-static-nodes.service` follows that directory so normal kmod and tmpfiles
-create static device nodes. No replacement init script or kernel patch is used.
-
-Sources: [NixOS 26.05 announcement](https://nixos.org/blog/announcements/2026/nixos-2605/),
-[NixOS activation](https://github.com/NixOS/nixpkgs/blob/5e2305d577ca00acbba631b05cb1094d172b29f3/nixos/modules/system/activation/top-level.nix),
+Sources: [26.05 announcement](https://nixos.org/blog/announcements/2026/nixos-2605/),
+[activation](https://github.com/NixOS/nixpkgs/blob/5e2305d577ca00acbba631b05cb1094d172b29f3/nixos/modules/system/activation/top-level.nix),
 [init-script loader](https://github.com/NixOS/nixpkgs/blob/5e2305d577ca00acbba631b05cb1094d172b29f3/nixos/modules/system/boot/loader/init-script/init-script.nix),
 [Qubes kernel management](https://doc.qubes-os.org/en/r4.3/user/advanced-topics/managing-vm-kernels.html).
 
 ## Configuration and persistence
 
-Use an ordinary shared TemplateVM with `/nix` on its root volume. AppVMs inherit
-that root through Qubes snapshots; `/home`, `/usr/local` and configured bind
-directories use the private volume. Disposable qubes retain Qubes' normal
-isolation rules. No shared writable store or per-AppVM activation framework is
-introduced.
-
-Ship a complete writable flake in `/etc/nixos`. Manage it with normal
-`nixos-rebuild` and flake commands. After a template change, shut down the
-template and restart its AppVMs. A user profile in an AppVM's persistent home
-does not preserve newly installed store objects across root resets.
-
-Keep generations for rollback. Replacing a template RPM replaces its root,
-including `/etc/nixos`; it is distinct from rebuilding NixOS in the template.
-[Recovery](docs/recovery.md) covers configuration backups and both operations.
+- Ordinary shared TemplateVM; `/nix` stays on root. AppVMs inherit native Qubes
+  snapshots. No shared writable store or per-AppVM activation framework.
+- `/home`, `/usr/local` and configured bind directories use private storage.
+  Disposables retain native Qubes isolation.
+- Complete writable flake in `/etc/nixos`; normal flake and `nixos-rebuild`
+  commands. Shut down the template and restart AppVMs after changes.
+- Persistent AppVM profiles do not preserve newly installed store objects when
+  root resets. Install shared software in the TemplateVM.
+- Retain generations for rollback. RPM replacement replaces root, including
+  `/etc/nixos`; it is separate from an in-template NixOS rebuild.
+- [Recovery](docs/recovery.md): configuration backups, rebuilds and replacement.
 
 Source: [Qubes template implementation](https://doc.qubes-os.org/en/r4.3/developer/system/template-implementation.html).
 
+## Root resize ordering
+
+- Confirmed cycle: early resize waits for udev; a network udev job waits for
+  `qubes-network-uplink@`; that service waits for initialization; initialization
+  waits for resize.
+- A longer qrexec timeout did not fix it: `udevadm settle` failed after 120
+  seconds, leaving the filesystem smaller than the root volume.
+- Disable the early `qubes-rootfs-resize` unit. Run the unchanged helper as
+  `qubes-nixos-rootfs-resize`, with normal systemd dependencies, after
+  `network.target` and before `qubes-qrexec-agent.service`.
+- Preserve private-volume initialization and bind-mount ordering.
+- `network.target` orders local network setup, not Internet availability.
+- Cost: maintain one small declarative service definition. No custom resize
+  script, udev-rule patch, exit-code suppression or partition conversion.
+- Verified networked growth on both pins at the normal 60-second qrexec timeout;
+  cold/live growth preserved data with zero failed system/user units.
+  [Measurements and remaining cases](docs/testing.md).
+
+| Alternative | Reason not selected |
+| --- | --- |
+| Increase qrexec timeout | The resize helper still timed out; the filesystem did not grow |
+| Add `--no-block` to the network udev rule | Changes upstream behavior; outside the no-patching boundary |
+| Move networking into early boot | Changes more services and their initialization requirements |
+| Drop-in under the original unit name | systemd cannot remove the existing `Before=local-fs.target` dependency through a drop-in |
+| Bare ext4 image without GPT | Supported by Qubes and the NixOS image builder; avoids this partition-resize branch for new images, but does not fix existing 0.1.0 roots |
+
+Keep the existing image layout for 0.1.1.
+[Configuration](docs/configuration.md#boot-and-service-ordering),
+[resizing procedure](docs/resizing.md).
+
+Sources: [resize helper](https://github.com/QubesOS/qubes-core-agent-linux/blob/v4.3.48/qubes-rpc/resize-rootfs),
+[network rule](https://github.com/QubesOS/qubes-core-agent-linux/blob/v4.3.48/network/udev-qubes-network.rules),
+[upstream issue](https://github.com/QubesOS/qubes-issues/issues/4419),
+[systemd drop-in rules](https://www.freedesktop.org/software/systemd/man/latest/systemd.unit.html),
+[Qubes root-device selection](https://github.com/QubesOS/qubes-linux-utils/blob/v4.3.19/dracut/simple/init.sh),
+[NixOS image layouts](https://github.com/NixOS/nixpkgs/blob/5e2305d577ca00acbba631b05cb1094d172b29f3/nixos/lib/make-disk-image.nix).
+
 ## Guest tools and path adaptation
 
-Package pinned Qubes releases compatible with Qubes 4.3. Use their native
-QubesDB, qrexec, GUI, audio, networking, firewall, storage and device components.
-Development branches are not substituted for compatible releases.
-
-Use upstream build variables first. Where paths are hardcoded, apply narrowly
-checked path or interpreter substitutions; leave program logic and protocols
-unchanged. Package-owned helpers and required dependencies use immutable store
-references. Application discovery, optional commands, security wrappers and
-extension directories remain explicit runtime interfaces.
-
-Store references retain dependencies for each generation. Adding another Nix
-package cannot retarget them. The cost is packaging maintenance when upstream
-introduces new paths: build-time checks catch missing executable targets, but
-runtime tests are still required. A global FHS compatibility tree would add a
-shared namespace and could hide missing dependencies.
-
-The path helper maps only files installed by the package plus explicit mappings.
-It records substitutions under `share/qubes-nixos/*-paths.json`. There are no
-general `/usr/bin` or `/usr/lib` compatibility links or directory-wide rewrites
-to the active system profile.
-
-Register upstream services, udev rules, tmpfiles and desktop settings through
-NixOS modules. Use `security.wrappers` for the upstream setuid file unpacker;
-its store executable stays mode 0755. Keep qrexec available during activation
-with `stopIfChanged = false`, allowing dependent user services to restart.
-Run upstream `qubes.PostInstall` after generation changes in fully persistent
-qubes to refresh menus and guest features.
-
-Use Xorg and XFCE applications through the Qubes session hooks. Dom0 supplies
-the window manager. Keep the upstream SVG handler unchanged; its known icon
-conversion failure is documented in [adaptations](docs/adaptations.md).
+- Pin Qubes releases compatible with Qubes 4.3. Retain native QubesDB, qrexec,
+  GUI, audio, networking, firewall, storage and device components.
+- Prefer upstream build variables. Otherwise use narrowly checked path/shebang
+  substitutions; leave program logic and protocols unchanged.
+- Bind required helpers to immutable store paths. Keep application discovery,
+  optional commands, security wrappers and extension directories as explicit
+  runtime interfaces.
+- Map only installed package files and explicit dependencies. Record changes in
+  `share/qubes-nixos/*-paths.json`. No general `/usr/bin` or `/usr/lib`
+  compatibility tree and no directory-wide rewrite to the active profile.
+- Benefit: another installed package cannot retarget a generation's dependencies;
+  GC retains paths referenced by retained generations.
+- Cost: new upstream paths may need packaging updates. Build checks catch missing
+  executable targets; runtime tests must cover behavior.
+- Register upstream services, udev rules, tmpfiles and desktop settings through
+  NixOS. Use `security.wrappers` for setuid `qfile-unpacker`; its store executable
+  remains mode 0755.
+- Keep qrexec available during activation with `stopIfChanged = false`.
+  Run upstream `qubes.PostInstall` after generation changes in fully persistent
+  qubes to refresh menus and guest features.
+- Use Qubes' Xorg/XFCE session hooks; dom0 supplies the window manager.
+  Keep the upstream SVG handler unchanged; document its icon-conversion issue.
+- Qubes selects its own Xorg config. Pass NixOS's native indexed font directory
+  through a Files section, retaining `fontPath`/`filesSection` customization.
+  Otherwise Xorg falls back to nonexistent compiled-in font directories.
 
 Sources: [core agent](https://github.com/QubesOS/qubes-core-agent-linux),
 [qrexec](https://github.com/QubesOS/qubes-core-qrexec),
-[GUI and audio](https://github.com/QubesOS/qubes-gui-agent-linux).
+[GUI/audio](https://github.com/QubesOS/qubes-gui-agent-linux).
+Details: [adaptations](docs/adaptations.md).
 
 ## Updates
 
-Use the distribution-specific `qubes.InstallUpdatesGUI` RPC to run ordinary
-flake updates and `nixos-rebuild`. A systemd oneshot keeps the update running
-if its window closes. Its activation settings prevent it from stopping itself
-while switching configurations. Serialize rebuilds and report failure when
-activation fails.
-
-Use Qubes UpdatesProxy for downloads and NotifyUpdates for notifications.
-Determine update eligibility from runtime persistence state. Keep generic
-VMExec behavior and the guest's NixOS identity unchanged.
-
-The central Qubes updater has no NixOS backend. The guest RPC does not register
-one, so full central-updater support needs an upstream backend. The supported
-RPC and normal NixOS commands are the available update interfaces.
+- Ordinary flake update and `nixos-rebuild`, run by a systemd oneshot.
+  Concurrent starts share the job; closing the GUI does not stop it.
+- Prevent the job from stopping itself during activation. Preserve failures.
+- Headless interface: root qrexec starts the existing service. Graphical
+  interface: distribution-specific `qubes.InstallUpdatesGUI` RPC.
+- Downloads through UpdatesProxy; notifications through NotifyUpdates.
+  Determine update eligibility from runtime persistence state.
+- Keep NixOS identity and generic VMExec behavior unchanged.
+- The central Qubes updater has no NixOS backend. Guest RPC support does not
+  register one; central integration needs an upstream backend.
 
 Sources: [updater dispatch](https://github.com/QubesOS/qubes-core-admin-linux/blob/8a6dd13e048f3cf8bcc349c8337560813303338b/vmupdate/agent/entrypoint.py),
-[distribution-specific update RPC](https://github.com/QubesOS/qubes-core-agent-linux/blob/4738333496c6b689207d8274d0f3425e796b6197/qubes-rpc/qubes.InstallUpdatesGUI).
+[distribution-specific RPC](https://github.com/QubesOS/qubes-core-agent-linux/blob/4738333496c6b689207d8274d0f3425e796b6197/qubes-rpc/qubes.InstallUpdatesGUI).
 
 ## Optional roles
 
-Expose desktop, USB/input forwarding, Split GPG 2 and UpdateVM support as normal
-NixOS options. Installing these components does not grant cross-qube access;
-Qubes service properties, device attachment and RPC policies select access.
-
-The UpdateVM role requires DNF and RPM even on non-RPM guests. Use unchanged
-Qubes helpers with DNF 5, RPM and fakeroot. NixOS itself remains managed by Nix.
-Dom0 invokes `/usr/lib/qubes/qubes-download-dom0-updates.sh` directly, so expose
-that single entry point with a tmpfiles link only while the role is enabled.
-
-Select librepo's upstream `USE_GPGME=OFF` build option for these helpers. With
-the pinned GPGME backend, DNF 5 receives a generic signature error for a missing
-repository key and cannot start key import. The RPM backend supplies the error
-DNF recognizes. Signature checks remain enabled.
+- Normal NixOS options select GUI, desktop, audio, USB/input, Split GPG 2,
+  passwordless root and UpdateVM support.
+- Installing components does not grant cross-qube access. Native service
+  properties, device attachment and RPC policies control access.
+- UpdateVM uses unchanged Qubes helpers, DNF 5, RPM and fakeroot, including on
+  this non-RPM guest. NixOS itself remains managed by Nix.
+- Expose `/usr/lib/qubes/qubes-download-dom0-updates.sh` with one tmpfiles link
+  only while UpdateVM support is enabled: dom0 calls that exact path.
+- Select librepo's upstream `USE_GPGME=OFF` option. Its RPM backend reports
+  missing keys in the form DNF recognizes; the pinned GPGME backend reports a
+  generic signature error and prevents key import. Verification stays enabled.
 
 Sources: [DNF key handling](https://github.com/rpm-software-management/dnf5/blob/5.4.2.1/libdnf5/repo/repo_sack.cpp),
-[librepo build options](https://github.com/rpm-software-management/librepo/blob/1.20.0/CMakeLists.txt).
+[librepo options](https://github.com/rpm-software-management/librepo/blob/1.20.0/CMakeLists.txt).
+
+## Minimal templates
+
+- Four variants: stable/unstable, each XFCE/minimal. Retain full XFCE defaults.
+- Share boot, persistence, guest tools and updates; separate Xorg from XFCE.
+- Minimal keeps Xorg/xterm, ordinary Qubes networking, qrexec, clipboard and
+  file transfer. This follows the official minimal-template model.
+- Omit desktop applications, audio, converters, USB/input, Split GPG, UpdateVM
+  tools and NetworkManager from minimal's selections. Keep required upstream
+  dependencies; do not strip packages merely to reduce size.
+- Passwordless administration stays enabled in XFCE and disabled in minimal.
+  Administer minimal through dom0's `qvm-run -u root`.
+- Keep optional roles configurable. Test their use and full-template upgrade
+  compatibility before release.
+
+Source: [Qubes minimal templates](https://doc.qubes-os.org/en/r4.3/user/templates/minimal-templates.html).
 
 ## Build and distribution
 
-A locked flake exposes the module, packages, images and native template RPMs.
-Use nixpkgs image-building facilities and the upstream Qubes template builder.
-QEMU TCG allows image finalization without requiring KVM.
-
-Package a split sparse tar archive of `root.img`, template metadata and the
-three application-menu lists. Validate installation with `qvm-template`,
-including its post-install RPC.
-
-Sign outside the Nix build. Private keys must not enter Git, derivation inputs,
-the Nix store, images or CI. Build outputs remain unsigned until the explicit
-signing step. Clients verify RPM signatures against the selected public key.
-
-Use GitHub Releases for RPM payloads and Pages for small signed repository
-metadata. Qubes Template Manager can consume this third-party repository after
-one-time public-key and `.repo` setup in dom0. Publishing it does not add it to
-Qubes' official community repository.
-
-Hosted CI checks source with read-only repository permissions and pinned
-actions. The Pages deployment receives prepared public metadata, verifies its
-signature and publishes it with deployment-specific permissions. Image builds
-and Qubes runtime acceptance remain separate from hosted source checks.
+- Locked flake exports modules, packages, images and native template RPMs.
+- Use nixpkgs' image builder and upstream Qubes template packaging.
+  QEMU TCG supports finalization without KVM.
+- Package split sparse `root.img`, template metadata and three application-menu
+  lists. Test native `qvm-template` installation and its post-install RPC.
+- Sign outside Nix. Private keys never enter Git, derivations, the store, images
+  or CI. Clients verify RPMs against the selected public key.
+- GitHub Releases stores payloads; Pages serves small signed metadata.
+  One-time public-key/repository setup enables native Template Manager use.
+  This does not add the project to Qubes' official community repository.
+- CI uses pinned actions and read-only source-check permissions. Pages verifies
+  prepared public metadata and uses deployment-specific permissions.
+- Image builds and Qubes runtime acceptance remain separate from hosted checks.
 
 Sources: [template packaging](https://doc.qubes-os.org/en/r4.3/developer/system/template-manager.html),
 [template builder](https://github.com/QubesOS/qubes-linux-template-builder),
@@ -150,36 +180,25 @@ Sources: [template packaging](https://doc.qubes-os.org/en/r4.3/developer/system/
 
 ## Size and rollback retention
 
-Strip debug sections from the block helper, including its unusual
-`etc/xen/scripts` installation directory, to avoid retaining debug-only compiler
-references. Keep manual pages, omit separate developer/Info documentation, and
-use one MBROLA voice per language. Desktop applications and Qubes roles remain
-available through the normal configuration.
-
-Retain the stock RPM package for UpdateVM support. Its build macros keep a
-compiler in the closure. Removing that dependency requires changing the
-package's tool lookup or separating its build and runtime outputs upstream.
-The integration does neither. Users who do not need the UpdateVM role can
-disable that role through its existing NixOS option.
-
-Enable native Nix deduplication and collect unreferenced paths below 1 GiB free,
-targeting 3 GiB. Keep generation deletion manual. Every retained generation
-remains a GC root; automatic cleanup cannot reclaim its live dependencies or
-guarantee enough space for a large build. No custom cleanup service is needed.
+- Strip debug sections from the block helper, including `etc/xen/scripts`,
+  avoiding debug-only compiler references.
+- Retain manual pages and one MBROLA voice per language; omit separate
+  developer/Info documentation. Preserve selected applications and Qubes roles.
+- Retain stock RPM for UpdateVM. Its build macros reference a compiler;
+  separating runtime/build outputs belongs upstream. Disable the optional role
+  when unneeded instead of deleting package files or changing tool lookup.
+- Native deduplication; automatic collection below 1 GiB free, targeting 3 GiB.
+  Generation deletion stays manual. No custom cleanup service.
+- Retained generations remain GC roots. Automatic cleanup cannot reclaim their
+  dependencies or guarantee enough room for a large build.
 
 ## Acceptance
 
-Require zero failed system and user units after successful operations.
-Document upstream journal diagnostics without filtering them or counting them
-as passed integration checks. Known issues and possible upstream changes are
-listed in [adaptations](docs/adaptations.md).
-
-Inspect shutdown consoles separately. Record transient failed units as well as
-the final filesystem teardown result; a clean next boot does not erase those
-diagnostics. The test record includes comparisons with stock Qubes guests.
-
-Check both stable and pinned unstable on Qubes, including installation, repeated
-boot, guest agents, GUI, clipboard, file transfer, audio, persistence, storage
-growth, disposable isolation, networking, device roles, updates and rollback.
-Evaluation and boot alone do not establish feature parity. Coverage and limits
-are listed in [test results](docs/testing.md).
+- Zero failed system/user units after successful operations. Keep upstream
+  journal diagnostics visible and record their limits.
+- Inspect shutdown separately, including transient failures and final filesystem
+  teardown. A successful next boot does not erase shutdown diagnostics.
+- Test both pins: installation, repeat boot, agents, GUI, clipboard, files, audio,
+  persistence, growth, disposables, networking, devices, updates and rollback.
+- Evaluation and boot alone do not establish parity.
+  [Test record](docs/testing.md), [adaptations](docs/adaptations.md).

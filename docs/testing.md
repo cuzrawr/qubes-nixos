@@ -1,5 +1,70 @@
 # Test results
 
+## 0.1.1 work in progress
+
+No 0.1.1 release acceptance yet. Confidence: high in the individual results
+below; they do not establish coverage of unbuilt or untested artifacts.
+
+| Check | Result |
+| --- | --- |
+| Four profile evaluations | Pass: stable/unstable XFCE and minimal |
+| Minimal candidate RPMs | Both built, signed and installed with native `qvm-template`; final artifacts pending |
+| Fresh minimal startup | Both pins: root qrexec, denied user sudo/su, locked root password, Xorg, proxy access, zero failed system/user units |
+| Stable minimal AppVM | Two boots, DNS/HTTPS, private persistence, root reset and privilege defaults passed |
+| Headless updates, both minimal pins | Concurrent starts shared one job; added software; update check preserved source lock; failed build retained generation/notification; rollback passed |
+| Full-profile refactor comparison | Both pins retain every selected package and the XFCE/audio, privilege, boot and Nix settings; only the native X11 font index is added |
+| Reproduce issue #1 on v0.1.0 stable | Pass: networked root growth hit the default 60-second qrexec timeout |
+| Diagnostic timeout increase | Boot took 129.2 seconds; resize failed at `udevadm settle` after 120 seconds; filesystem stayed smaller than volume |
+| Changed service order, networked stable boot | Pass: 12.29 seconds; resize 0.73 seconds; unchanged file checksum |
+| Repeat networked growth | Pass: startup 11.12 seconds; resize 0.79 seconds |
+| Live stable root growth | Pass: 1.83 seconds; filesystem expanded; unchanged checksum |
+| Network detach/reattach after growth | Pass: direct HTTPS recovered; no failed units |
+| Automated resize regression | Pass on stable and unstable: cold growth, live growth, data integrity, zero failed system/user units; default qrexec timeout |
+| Unstable networked resize startup | 10.40 seconds with pending growth; baseline 11.74 seconds |
+| Stable minimal, no NetVM | Cold/live growth and checksums passed; growth boot 9.90 seconds, baseline 10.14 seconds |
+| Minimal clipboard and files | Both directions passed between stable/unstable AppVMs; root Xterm administration passed on both |
+| Minimal networking | Both passed DNS/HTTPS, native firewall deny and recovery |
+| Enlarged template root inheritance | Stable minimal AppVM received the enlarged filesystem after template shutdown/restart |
+
+The reproduction used an isolated clone. Only the service ordering changed
+for the successful comparison; upstream resize/network programs were unchanged.
+`tests/lab-resize.py` runs in dom0 on a dedicated, stopped test TemplateVM and
+grows its root by 2 GiB. Test with and without a NetVM.
+
+Pending: four final RPMs and fresh installs;
+optional-role checks; 0.1.0 upgrade with retained AppVM data and reviewed custom
+configuration. [Feature gaps](feature-gaps.md) lists wider untested cases.
+
+## Boot log comparison during 0.1.1 testing
+
+Checked dmesg, system/user journals, Xorg and dom0 qrexec/GUI/console logs.
+Fresh Fedora 43 and Debian 13 reference AppVMs used the same Qubes kernel.
+All reached a running state with zero failed system/user units.
+Confidence: high for these comparisons; a matching message is not proof that
+all consequences are harmless.
+
+| Diagnostic | Observed / action |
+| --- | --- |
+| PVH ACPI/PCI, nomodeset and IMA messages | Present in NixOS, Fedora and Debian |
+| Unsupported discard on private storage | Present in all three; depends on the virtual block device |
+| Xorg dummy-driver probe, VGA arbiter and missing render node | Present in all three |
+| NixOS missing font directories | Native indexed font directory and explicit Xorg lookup fixed the gap; both pins boot with valid font paths; stable fixed-font Xterm passed |
+| NixOS duplicate D-Bus registrations and graphical-seat setup | Still present; causes and upstream proposals in [adaptations](adaptations.md) |
+| Missing Xen `xl.conf` | Found by reviewing the full journal; registration of the packaged default is under test |
+| Unstable I/O-pressure threshold warning | Reproduced with systemd 261.2; inherited settings reject the setter with `EBUSY`. Actual user manager and API reproducer retain registered watches; [details](adaptations.md#systemd-inherited-io-pressure-threshold) |
+| Memory-hotplug write warning | Kernel tracing confirms successful Xen auto-online followed by udev's already-online result; 768 MiB allocation passed, all blocks online, zero failed units. Also reproduced in stock Fedora; [details](adaptations.md#qubeslinux-duplicate-memory-onlining) |
+| Xen CPU-count query errors | Reproduced in fresh Fedora and Debian; native device daemon remains active on all three |
+| Obsolete `StandardOutput=syslog` | Also present in stock Fedora and Debian services; systemd maps it to journal output |
+| Xorg missing acpid socket on NixOS | Remains visible; GUI and power-hook coverage are separate from physical suspend/resume |
+| Other stock-template diagnostics | Fedora logged a balloon allocation warning; Debian logged ALSA-rule and transient audio messages. These do not excuse unrelated NixOS failures |
+
+Headless-update tests pinned inputs to the recorded revisions to exercise
+integration changes without an unrelated package upgrade. Failure tests
+intentionally produced a failed update unit; successful rollback restored the
+baseline and zero failed units.
+
+## 0.1.0 release record
+
 Release [v0.1.0](https://github.com/cuzrawr/qubes-nixos/releases/tag/v0.1.0).
 Final artifact checks: 2026-10-07.
 Build source: [155d51a](https://github.com/cuzrawr/qubes-nixos/commit/155d51ab251e01c484949adeb064734ecd919711), signed tag `v0.1.0`.
@@ -45,7 +110,7 @@ Coverage of the stable system closure included in v0.1.0:
 | --- | --- |
 | Guest startup | QubesDB, qrexec, Xen modules, device permissions, root/user RPC and sudo |
 | Persistence | AppVM home and `/usr/local` survive restart; root changes reset; template generation propagates after shutdown/restart |
-| Storage growth | Native root and private-volume resizing preserves data and expands the filesystem |
+| Storage growth | Small root/private increases preserved data; later networked root growth exposed issue #1, documented above |
 | Networking | DNS/HTTPS, networkless-template UpdatesProxy, NixOS as NetVM, firewall deny/recovery |
 | Desktop | Xorg/XFCE windows, Firefox, labeled notifications, application menus refreshed after package changes |
 | Clipboard | Application copy/paste; native Qubes shortcuts between NixOS and Fedora in both directions, verified from saved text |
@@ -77,7 +142,8 @@ The pinned 26.11 configuration also passed:
 - Repeated TemplateVM/AppVM startup, zero failed system/user units, HTTPS and
   networkless-template UpdatesProxy.
 - AppVM persistence, root reset and template-generation propagation.
-- Native root/private-volume growth, preserved data and filesystem expansion.
+- Small root/private-volume growth, preserved data and filesystem expansion;
+  this did not cover the later networked resize regression.
 - Automatic store deduplication and garbage collection with all system
   generations preserved; zero failed system/user units afterward.
 - Native update GUI/RPC, dotted configuration names, ordinary input overrides,
@@ -141,8 +207,9 @@ operations. Upstream diagnostics remain visible:
   remain healthy.
 - Qubes' graphical-seat setup tries to persist a rule in a read-only NixOS
   directory; GUI, clipboard and input tests pass despite that message.
-- An upstream memory-hotplug udev rule reported a failed write during one test;
-  all exposed memory blocks were online when checked. This remains unresolved.
+- An upstream memory-hotplug udev rule reported a failed write; all exposed
+  blocks were online. The later 0.1.1 investigation traced this warning to
+  duplicate onlining; see the comparison above.
 - Early external-initramfs handoff emits API-filesystem warnings.
 
 See [adaptations and upstream proposals](adaptations.md) for causes and scope.

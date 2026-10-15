@@ -1,6 +1,55 @@
 # Recovery and integration updates
 
-Applies to both templates and their stock external-kernel boot path.
+Applies to stable/unstable, XFCE/minimal and the stock external-kernel boot path.
+Commands inside a guest require root. Minimal: open a root terminal from dom0
+with `qvm-run -u root TEMPLATE xterm`; omit `sudo` inside that terminal.
+
+## 0.1.0 to 0.1.1
+
+Status: release tests in progress. Do not treat this section as an announcement
+that 0.1.1 binaries are published. [Acceptance record](testing.md).
+
+| Change | Effect on existing users |
+| --- | --- |
+| RPM release `1` to `2` | Qubes Template Manager can distinguish the replacement build |
+| Resize service ordering | Fixes the reproduced networked root-growth boot cycle; no partition conversion |
+| Shared GUI/audio modules | XFCE selections remain; minimal is a separate template choice |
+| `profiles/base.nix` | Shared Nix/documentation/state-version defaults moved out of the full application selection |
+| New minimal templates | Separate names; an XFCE upgrade does not silently become minimal |
+
+### Packaged template replacement
+
+1. Back up the TemplateVM and AppVMs with Qubes Backup.
+2. Save customized `/etc/nixos` outside the template. A template RPM upgrade
+   replaces this directory and the rest of its root.
+3. Shut down dependent qubes, then the TemplateVM.
+4. After 0.1.1 is published, select the update in Template Manager, or use
+   `qvm-template --repoid=qubes-nixos --refresh upgrade TEMPLATE` in dom0.
+5. Start the template; check `systemctl --failed` and `df -h /`; shut it down.
+6. Test one AppVM. Its private data should remain; verify before starting others.
+7. Reapply reviewed local options to the new configuration and rebuild.
+
+Do not copy the old `modules/` tree over the replacement: that restores the old
+integration. Keep the backup until the new template and applications work.
+
+### Keep a customized source configuration
+
+Use [integration source updates](#update-the-integration-source), without
+replacing the template RPM. Review these 0.1.1 changes together:
+
+- `flake.nix`, `profiles/base.nix`, `modules/` and the profile selection file.
+- Preserve local packages, imported modules, update target/input and
+  `system.stateVersion`.
+- Existing custom settings can remain in `configuration.nix`; shared scalar
+  defaults use `mkDefault` so ordinary local values can override them.
+- Keep `boot.kernel.enable` and `boot.initrd.enable` false. Keep the new resize
+  unit ordering from [configuration](configuration.md#boot-and-service-ordering).
+- Build first with `nixos-rebuild build --flake /etc/nixos#CONFIGURATION`.
+  Apply with `switch` only after a successful build. Check failed units and
+  restart the template before testing its AppVMs.
+
+For a 0.1.0 template that cannot start after growth, use the
+[resize recovery procedure](resizing.md#startup-timeout-on-010) first.
 
 ## Restore a generation
 
@@ -31,6 +80,8 @@ nix build .#template-rpm-unstable -o result-unstable
 ```
 
 Use the tag or source commit from the matching [test/release record](testing.md).
+The 0.1.0 tag contains XFCE only. Minimal build targets first appear in 0.1.1;
+use their matching tag and the build-output table in the README.
 Keep `flake.lock`; do not update inputs while reproducing that version.
 [Sign the RPM](distribution.md#sign-a-local-build), then transfer it and the
 public key to dom0 using the README commands.
@@ -83,7 +134,7 @@ Use this when replacement through `reinstall` is unsuitable. Keep AppVMs halted
 while temporarily assigning their template property elsewhere.
 
 ```sh
-# dom0: choose either nixos-26.05-xfce or nixos-unstable-xfce
+# dom0: choose the installed template name from the README table
 template=nixos-26.05-xfce
 qvm-shutdown --wait MY_APP
 qvm-shutdown --wait "$template"

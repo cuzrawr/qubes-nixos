@@ -74,9 +74,11 @@ in
   config = lib.mkIf (config.services.qubes.enable && cfg.enable) {
     environment.extraInit = proxySetup;
     # Upstream explicitly supports distribution-specific InstallUpdatesGUI.
-    services.qubes.extraPackages = lib.optionals config.services.qubes.desktop.enable [
-      (lib.hiPrio rpc)
-    ];
+    services.qubes.extraPackages =
+      lib.optionals (config.services.qubes.gui.enable && config.services.qubes.passwordlessRoot.enable)
+        [
+          (lib.hiPrio rpc)
+        ];
 
     # Login shells and the daemon need the same role-dependent environment.
     systemd.services.qubes-nix-proxy = {

@@ -5,23 +5,34 @@
   ...
 }:
 {
+  options.services.qubes.passwordlessRoot.enable = lib.mkOption {
+    type = lib.types.bool;
+    default = true;
+    description = "Allow the qube's desktop user to administer it without a password.";
+  };
+
   config = lib.mkIf config.services.qubes.enable {
     users.groups.qubes = { };
     users.users.user = {
       isNormalUser = true;
       uid = 1000;
       group = "users";
-      extraGroups = [
-        "qubes"
-        "wheel"
-      ];
-      initialHashedPassword = "";
+      extraGroups = [ "qubes" ] ++ lib.optional config.services.qubes.passwordlessRoot.enable "wheel";
+      initialHashedPassword = if config.services.qubes.passwordlessRoot.enable then "" else "!";
     };
-    users.users.root.initialHashedPassword = "";
+    users.users.root =
+      if config.services.qubes.passwordlessRoot.enable then
+        {
+          initialHashedPassword = lib.mkDefault "";
+        }
+      else
+        {
+          hashedPassword = lib.mkDefault "!";
+        };
 
     # As in the standard Qubes templates, isolation is between qubes. The
     # desktop user can administer its own qube without a separate password.
-    security.sudo.wheelNeedsPassword = false;
+    security.sudo.wheelNeedsPassword = lib.mkIf config.services.qubes.passwordlessRoot.enable false;
     # Preserve upstream Qubes' umask and Qt behavior for privileged commands.
     security.sudo.extraConfig = ''
       Defaults umask = 0022
@@ -33,7 +44,7 @@
         rootOK = true;
         setLoginUid = true;
       };
-      su.rules.auth.qubes = {
+      su.rules.auth.qubes = lib.mkIf config.services.qubes.passwordlessRoot.enable {
         order = config.security.pam.services.su.rules.auth.unix.order - 10;
         control = "sufficient";
         modulePath = "${pkgs.pam}/lib/security/pam_succeed_if.so";
@@ -63,7 +74,7 @@
       setuid = true;
     };
     security.polkit.enable = true;
-    security.polkit.extraConfig = ''
+    security.polkit.extraConfig = lib.mkIf config.services.qubes.passwordlessRoot.enable ''
       polkit.addRule(function(action, subject) {
         if (subject.isInGroup("qubes")) return polkit.Result.YES;
       });

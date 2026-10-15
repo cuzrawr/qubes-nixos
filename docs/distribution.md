@@ -4,11 +4,12 @@ The project public key is [published here](../repository/RPM-GPG-KEY-qubes-nixos
 Fingerprint: `4B90 5004 6403 DDD1 B6F1 FCF7 A752 8E30 ED60 389C`.
 Published builds: [GitHub Releases](https://github.com/cuzrawr/qubes-nixos/releases).
 
-Build with a committed lock file, complete the acceptance tests, and sign the
-RPMs outside Nix. Publish the source commit, nixpkgs pins, checksums, public key
-fingerprint and test results with each release. Increase the RPM `release`
-argument in `flake.nix` for a replacement build; do not replace an existing
-release asset with different bytes.
+- Build with the committed lock file; complete [acceptance tests](testing.md).
+- Publish the source commit, pins, checksums, public fingerprint and results.
+- Increase the RPM `release` in `flake.nix` for replacement builds.
+- Never replace a published asset with different bytes.
+- XFCE and minimal use the same signing/repository procedure. Select the
+  build output and template name from the [README](../README.md#versions).
 
 The upstream template RPM spec supplies a GPLv3+ package label. The contained
 components retain their own licenses; this repository's integration source has
@@ -28,15 +29,16 @@ install -d -m700 "$GNUPGHOME"
 
 # For a new working identity; use its printed fingerprint below.
 gpg --quick-generate-key 'YOUR_RELEASE_IDENTITY' rsa3072 sign 0
-mkdir -p artifacts
+artifacts=../qubes-nixos-tmp/artifacts
+mkdir -p "$artifacts"
+rpm=qubes-template-nixos-26.05-xfce-4.3.0-2.noarch.rpm
 nix run .#sign-template -- YOUR_KEY_FINGERPRINT \
-  result-stable/qubes-template-nixos-26.05-xfce-4.3.0-1.noarch.rpm \
-  artifacts/qubes-template-nixos-26.05-xfce-4.3.0-1.noarch.rpm
-gpg --armor --export YOUR_KEY_FINGERPRINT > artifacts/template-key.asc
+  "result-stable/$rpm" "$artifacts/$rpm"
+gpg --armor --export YOUR_KEY_FINGERPRINT > "$artifacts/template-key.asc"
 ```
 
-For unstable, use `result-unstable/` and
-`qubes-template-nixos-unstable-xfce-4.3.0-1.noarch.rpm`.
+Use the actual filename produced by the selected build; v0.1.0 uses release `1`,
+the 0.1.1 source uses `2`. Repeat for each variant being published.
 Existing working key: omit key generation. Keep this keyring outside the checkout;
 back it up separately. `sign-template` requires an explicit signing keyring.
 
@@ -48,15 +50,18 @@ to GitHub. A compromised key requires revocation and a new client trust setup.
 GitHub can host the signed RPMs as release assets. Users download them in a
 transfer qube and follow the local install instructions in the README.
 
-After signing into `artifacts/`, enter the publishing shell:
+After signing, enter the publishing shell. Use a new, reviewed release tag:
 
 ```sh
 nix develop .#release
-(cd artifacts && sha256sum *.rpm > SHA256SUMS)
-gpg --local-user YOUR_KEY_FINGERPRINT --armor --detach-sign artifacts/SHA256SUMS
-gh release create v0.1.0 --draft --verify-tag \
-  --title 'NixOS templates v0.1.0' --notes-file release-notes.txt \
-  artifacts/*.rpm artifacts/template-key.asc artifacts/SHA256SUMS artifacts/SHA256SUMS.asc
+artifacts=../qubes-nixos-tmp/artifacts
+tag=v0.1.1
+(cd "$artifacts" && sha256sum *.rpm > SHA256SUMS)
+gpg --local-user YOUR_KEY_FINGERPRINT --armor --detach-sign "$artifacts/SHA256SUMS"
+gh release create "$tag" --draft --verify-tag \
+  --title "NixOS templates $tag" --notes-file "$artifacts/release-notes.txt" \
+  "$artifacts"/*.rpm "$artifacts/template-key.asc" \
+  "$artifacts/SHA256SUMS" "$artifacts/SHA256SUMS.asc"
 ```
 
 Create and push the reviewed source tag first. Review the draft and publish it
@@ -70,15 +75,15 @@ Host small RPM metadata on GitHub Pages and RPM payloads on GitHub Releases.
 The metadata's base URL points at that release's assets. This avoids putting
 multi-gigabyte RPMs in Git or a Pages site.
 
-With signed RPMs in `artifacts/`, from the publishing shell:
+With only the intended signed RPMs in `$artifacts`, from the same shell:
 
 ```sh
-mkdir -p artifacts/rpm-repo
-cp artifacts/*.rpm artifacts/rpm-repo/
+mkdir -p "$artifacts/rpm-repo"
+cp "$artifacts"/*.rpm "$artifacts/rpm-repo/"
 createrepo_c \
-  --baseurl https://github.com/cuzrawr/qubes-nixos/releases/download/v0.1.0/ \
-  artifacts/rpm-repo
-gpg --local-user YOUR_KEY_FINGERPRINT --armor --detach-sign artifacts/rpm-repo/repodata/repomd.xml
+  --baseurl "https://github.com/cuzrawr/qubes-nixos/releases/download/$tag/" \
+  "$artifacts/rpm-repo"
+gpg --local-user YOUR_KEY_FINGERPRINT --armor --detach-sign "$artifacts/rpm-repo/repodata/repomd.xml"
 ```
 
 Copy only `repodata/` into `repository/rpm/r4.3/x86_64/`, together with the public
@@ -88,7 +93,7 @@ RPMs under that release. For later
 versions, rebuild metadata pointing to the new release; preserve old release
 assets for users who need them.
 
-For an ordinary HTTPS server, upload the complete `artifacts/rpm-repo/` directory
+For an ordinary HTTPS server, upload the complete `$artifacts/rpm-repo/` directory
 and omit `--baseurl` when generating metadata. Keep the RPMs beside `repodata/`.
 These methods use the same native Qubes client configuration.
 
@@ -118,8 +123,8 @@ qvm-template --repoid=qubes-nixos --refresh list --available
 qvm-template --repoid=qubes-nixos install nixos-26.05-xfce
 ```
 
-Use `nixos-unstable-xfce` for unstable. Qubes Template Manager can then use the
-configured repository too. Downloads run through the normal UpdateVM.
+Use the selected template name for other profiles. Template Manager uses this
+repository too. Downloads run through the normal UpdateVM.
 
 For a one-time repository selection, keep the key in the same key directory and
 use the downloaded `.repo` file without installing it:

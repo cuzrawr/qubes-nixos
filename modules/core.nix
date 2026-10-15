@@ -59,8 +59,8 @@ let
       tinyproxy
       xen
     ]);
-  # The upstream units retain their commands, ordering and runtime conditions.
-  # NixOS enables them explicitly instead of running a distribution preset.
+  # Supply the command environment without replacing upstream guest programs.
+  # persistence.nix documents the root-resize ordering exception.
   services = [
     "qubes-db"
     "qubes-qrexec-agent"
@@ -70,7 +70,7 @@ let
     "qubes-misc-post"
     "qubes-mount-dirs"
     "qubes-bind-dirs"
-    "qubes-rootfs-resize"
+    "qubes-nixos-rootfs-resize"
     "qubes-antispoof"
     "qubes-iptables"
     "qubes-network"

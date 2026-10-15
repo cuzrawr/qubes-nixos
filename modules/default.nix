@@ -6,7 +6,9 @@
     ./persistence.nix
     ./networking.nix
     ./users.nix
+    ./gui.nix
     ./desktop.nix
+    ./audio.nix
     ./devices.nix
     ./updates.nix
     ./update-vm.nix

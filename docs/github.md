@@ -1,6 +1,8 @@
 # GitHub Free
 
-Checked against GitHub documentation on 2026-10-07. Repository visibility: public.
+Checked against GitHub documentation on 2026-10-15. Public repository.
+Confidence: high for the linked limits on that date; runtime acceptance stays
+in the [test record](testing.md).
 
 ## CI
 
@@ -10,11 +12,11 @@ Triggers: pushes to `main`, pull requests and manual runs.
 | Check | Runs on GitHub |
 | --- | --- |
 | Nix formatting | Yes |
-| Evaluation of stable, unstable and diagnostic flake outputs | Yes |
+| Evaluation of stable/unstable XFCE, minimal and diagnostic outputs | Yes |
 | Existing path-adaptation tests | Yes |
 | Signing helper build and its shell checks | Yes |
 | ASCII Markdown | Yes |
-| Complete desktop images/RPMs | Local builder |
+| Complete images/RPMs | Local builder |
 | Qubes boot, GUI, devices, updates and rollback | Qubes runtime environment |
 
 - Standard public-repository runners: free, unlimited minutes.

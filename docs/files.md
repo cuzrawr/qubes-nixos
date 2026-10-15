@@ -10,22 +10,27 @@ RPMs, private keys, build caches and test logs stay outside the repository.
 README.md
 WHY.md
 configuration.nix
+configuration-minimal.nix
 docs/adaptations.md
 docs/comparison.md
 docs/configuration.md
 docs/distribution.md
+docs/feature-gaps.md
 docs/files.md
 docs/github.md
 docs/recovery.md
+docs/resizing.md
 docs/testing.md
 flake.lock
 flake.nix
 lib/image.nix
 lib/template-rpm.nix
 modules/boot.nix
+modules/audio.nix
 modules/core.nix
 modules/default.nix
 modules/desktop.nix
+modules/gui.nix
 modules/devices.nix
 modules/networking.nix
 modules/persistence.nix
@@ -53,6 +58,7 @@ pkgs/sources.nix
 pkgs/split-gpg2.nix
 pkgs/update-vm.nix
 pkgs/usb-proxy.nix
+profiles/base.nix
 repository/RPM-GPG-KEY-qubes-nixos
 repository/index.html
 repository/qubes-nixos.repo
@@ -66,6 +72,7 @@ tests/boot.nix
 tests/core.nix
 tests/desktop.nix
 tests/lab-network.py
+tests/lab-resize.py
 tests/test_paths.py
 ```
 
