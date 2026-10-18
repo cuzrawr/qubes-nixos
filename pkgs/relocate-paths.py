@@ -1,4 +1,4 @@
-"""Resolve literal paths in installed upstream text files."""
+"""resolve literal paths in installed upstream text files."""
 
 import json
 from pathlib import Path
@@ -7,15 +7,15 @@ import sys
 
 root = Path(sys.argv[1])
 replacements = json.loads(Path(sys.argv[2]).read_text())
-# References to this package's own installed files use its immutable store
-# output. Explicit mappings (notably privileged wrappers) take precedence.
+# references to this package's own installed files use its immutable store
+# output. explicit mappings (notably privileged wrappers) take precedence.
 for directory in ("bin", "sbin", "lib/qubes", "share/qubes"):
     for path in (root / directory).rglob("*"):
         if path.is_file():
             replacements.setdefault("/usr/" + str(path.relative_to(root)), str(path))
 counts = dict.fromkeys(replacements, 0)
 patterns = [
-    # A leading '-' is also systemd's ExecStart ignore-failure prefix.
+    # a leading '-' is also systemd's ExecStart ignore-failure prefix.
     (old, re.compile(r"(?<![\w/.])" + re.escape(old) + r"(?![\w.-])"), new)
     for old, new in sorted(replacements.items(), key=lambda item: -len(item[0]))
 ]

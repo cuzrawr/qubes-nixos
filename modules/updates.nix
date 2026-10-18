@@ -73,14 +73,14 @@ in
 
   config = lib.mkIf (config.services.qubes.enable && cfg.enable) {
     environment.extraInit = proxySetup;
-    # Upstream explicitly supports distribution-specific InstallUpdatesGUI.
+    # upstream explicitly supports distribution-specific InstallUpdatesGUI.
     services.qubes.extraPackages =
       lib.optionals (config.services.qubes.gui.enable && config.services.qubes.passwordlessRoot.enable)
         [
           (lib.hiPrio rpc)
         ];
 
-    # Login shells and the daemon need the same role-dependent environment.
+    # login shells and the daemon need the same role-dependent environment.
     systemd.services.qubes-nix-proxy = {
       after = [ "qubes-sysinit.service" ];
       requires = [ "qubes-sysinit.service" ];
@@ -105,7 +105,7 @@ in
     };
 
     # systemd serializes starts and survives the update window closing.
-    # A configuration switch must not restart its own update service.
+    # a configuration switch must not restart its own update service.
     systemd.services.qubes-nixos-update = {
       description = "Update the NixOS template";
       after = [
@@ -131,7 +131,7 @@ in
     systemd.services.qubes-update-check = {
       unitConfig.ConditionPathExists = [ "/run/qubes/persistent-full" ];
       path = runtime;
-      # Reset upstream's distribution-specific command and failure suppression.
+      # reset upstream's distribution-specific command and failure suppression.
       serviceConfig.ExecStart = [
         ""
         "${check}"

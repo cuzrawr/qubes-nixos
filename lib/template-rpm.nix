@@ -37,7 +37,7 @@ pkgs.runCommand "qubes-template-${name}-${version}-${release}"
   ''
     mkdir -p "$out" build buildroots appmenus rpmtmp rpmdb "qubeized_images/$TEMPLATE_NAME"
     rpm --define "_dbpath $PWD/rpmdb" --initdb
-    # Upstream sparsifies its input, so give it a writable copy, never a store link.
+    # upstream sparsifies its input, so give it a writable copy, never a store link.
     cp --reflink=auto --sparse=always ${image}/root.img "qubeized_images/$TEMPLATE_NAME/root.img"
     chmod u+w "qubeized_images/$TEMPLATE_NAME/root.img"
     cp "$templateConfigTextPath" template.conf

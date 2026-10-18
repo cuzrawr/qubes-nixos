@@ -13,7 +13,7 @@ in
 
   config = lib.mkIf config.services.qubes.enable {
     services.qubes.extraPackages = lib.optionals cfg.enable [ pkgs.qubes.update-vm ];
-    # Dom0 invokes this exact guest path. Keep this one public entry point;
+    # dom0 invokes this exact guest path. keep this one public entry point;
     # the helper and all its dependencies remain in the immutable store.
     systemd.tmpfiles.rules =
       if cfg.enable then

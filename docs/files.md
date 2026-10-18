@@ -73,7 +73,9 @@ tests/core.nix
 tests/desktop.nix
 tests/lab-network.py
 tests/lab-resize.py
+tests/profiles.nix
 tests/test_paths.py
+versions.txt
 ```
 
 Metadata filenames begin with their content checksum and change per release.

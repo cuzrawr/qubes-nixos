@@ -6,7 +6,7 @@
 }:
 {
   config = lib.mkIf config.services.qubes.enable {
-    # Upstream mount-dirs initializes the private device before mounting it.
+    # upstream mount-dirs initializes the private device before mounting it.
     fileSystems."/rw" = {
       device = "/dev/xvdb";
       fsType = "auto";
@@ -25,8 +25,8 @@
         '';
       };
       qubes-bind-dirs.wantedBy = [ "multi-user.target" ];
-      # The early upstream unit waits for all udev jobs, including network
-      # jobs that need local-fs.target. Run the same helper after that barrier.
+      # the early upstream unit waits for all udev jobs, including network
+      # jobs that need local-fs.target. run the same helper after that barrier.
       qubes-rootfs-resize.enable = false;
       qubes-nixos-rootfs-resize = {
         description = "Adjust root filesystem size";
@@ -45,7 +45,7 @@
       };
     };
     # qubes-bind-dirs requires the upstream home.mount and usr-local.mount.
-    # Their runtime conditions also support Qubes' custom-persist feature.
+    # their runtime conditions also support Qubes' custom-persist feature.
     systemd.tmpfiles.rules = [
       "d /var/lib/qubes 0755 root root -"
       "d /etc/qubes-bind-dirs.d 0755 root root -"

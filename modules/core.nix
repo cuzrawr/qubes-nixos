@@ -59,7 +59,7 @@ let
       tinyproxy
       xen
     ]);
-  # Supply the command environment without replacing upstream guest programs.
+  # supply the command environment without replacing upstream guest programs.
   # persistence.nix documents the root-resize ordering exception.
   services = [
     "qubes-db"
@@ -103,7 +103,7 @@ in
     environment.etc = {
       "qubes".source = "${etcTree}/etc/qubes";
       "qubes-rpc".source = "${etcTree}/etc/qubes-rpc";
-      # Use upstream's complete list, including privcmd required by libvchan.
+      # use upstream's complete list, including privcmd required by libvchan.
       "modules-load.d/qubes-core.conf".source = "${q.core-agent}/lib/modules-load.d/qubes-core.conf";
       "qubes-suspend-module-blacklist".source = "${q.core-agent}/etc/qubes-suspend-module-blacklist";
       "sysctl.d/20-qubes-core.conf".source = "${q.core-agent}/lib/sysctl.d/20-qubes-core.conf";
@@ -129,14 +129,14 @@ in
           qubes-early-vm-config.wantedBy = [ "sysinit.target" ];
           dev-xvdc1-swap.wantedBy = [ "sysinit.target" ];
           qubes-qrexec-agent.wantedBy = [ "multi-user.target" ];
-          # User services restart during activation and still need qrexec.
-          # Restart the transport afterward instead of stopping it beforehand.
+          # user services restart during activation and still need qrexec.
+          # restart the transport afterward instead of stopping it beforehand.
           qubes-qrexec-agent.stopIfChanged = false;
           qubes-meminfo-writer.wantedBy = [ "multi-user.target" ];
           qubes-misc-post.wantedBy = [ "multi-user.target" ];
           xendriverdomain.wantedBy = [ "multi-user.target" ];
-          # The same post-transaction hook used by upstream's DNF integration.
-          # A Nix generation change must also refresh menus and guest features.
+          # the same post-transaction hook used by upstream's DNF integration.
+          # a Nix generation change must also refresh menus and guest features.
           qubes-post-install = {
             wantedBy = [ "multi-user.target" ];
             after = [ "qubes-qrexec-agent.service" ];
@@ -152,7 +152,7 @@ in
           };
         };
 
-    # Upstream seed handling imports fresh entropy supplied by dom0 before use.
+    # upstream seed handling imports fresh entropy supplied by dom0 before use.
     systemd.timers.qubes-sync-time.wantedBy = [ "timers.target" ];
     services.timesyncd.enable = lib.mkDefault false;
     services.dbus.enable = true;

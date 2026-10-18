@@ -1,4 +1,9 @@
-{ pkgs, ... }:
+{
+  config,
+  # deadnix: skip
+  pkgs,
+  ...
+}:
 {
   services.qubes = {
     gui.enable = true;
@@ -6,7 +11,8 @@
     usb.enable = false;
   };
   networking.networkmanager.enable = false;
+  services.pipewire.enable = config.services.qubes.audio.enable;
 
-  # Example: [ pkgs.htop ]. Enable optional Qubes roles above as needed.
+  # example: [ pkgs.htop ]. enable optional Qubes roles above as needed.
   environment.systemPackages = [ ];
 }

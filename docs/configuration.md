@@ -20,6 +20,9 @@ Native Qubes policies and qube properties remain in dom0.
 | `networking.networkmanager.enable` | `true` | `false` | Physical interfaces; Qubes' Xen uplink still uses QubesDB |
 
 These are shipped profile selections, not all module-level defaults.
+Minimal ties `services.pipewire.enable` to `services.qubes.audio.enable`;
+NixOS's ordinary Xorg defaults would otherwise enable PipeWire without the
+Qubes transport. Enable the Qubes audio option to add the complete audio role.
 For a headless custom profile, disable both `desktop.enable` and `gui.enable`;
 remove unwanted applications from its package list. Headless role coverage is
 listed in [testing](testing.md).

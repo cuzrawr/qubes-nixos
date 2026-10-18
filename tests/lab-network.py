@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Run in dom0 against a dedicated test AppVM; restore its firewall afterward."""
+"""run in dom0 against a dedicated test AppVM; restore its firewall afterward."""
+
 import subprocess
 import sys
 import time
@@ -18,9 +19,7 @@ def fetch():
 
 
 def handled():
-    output, _ = vm.netvm.run_with_args(
-        "qubesdb-read", f"/qubes-firewall-handled/{vm.ip}", user="root"
-    )
+    output, _ = vm.netvm.run_with_args("qubesdb-read", f"/qubes-firewall-handled/{vm.ip}", user="root")
     return int(output)
 
 
@@ -34,7 +33,7 @@ def set_rules(rules):
         time.sleep(0.2)
 
 
-assert b"StoreDir: /nix/store" in fetch(), "Initial HTTPS request failed"
+assert b"StoreDir: /nix/store" in fetch(), "initial HTTPS request failed"
 try:
     set_rules([qubesadmin.firewall.Rule("action=drop")])
     try:

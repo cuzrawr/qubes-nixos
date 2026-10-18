@@ -53,6 +53,12 @@ This is a third-party repository, separate from Qubes' official community list.
 Published binaries: v0.1.0 XFCE. The 0.1.1 source adds minimal profiles and a
 resize-ordering fix; final release tests are still in progress.
 
+[Release changes](versions.txt) |
+[0.1.0 to 0.1.1: back up, upgrade and check your qubes](docs/recovery.md#010-to-011).
+Template Manager upgrades replace template root and clear its private volume,
+including `/etc/nixos`, `/home` and `/usr/local`. Back up before upgrading;
+existing AppVM private volumes remain separate.
+
 | Variant | Template name | Build output | Configuration | Update input |
 | --- | --- | --- | --- | --- |
 | Stable 26.05 XFCE | `nixos-26.05-xfce` | `template-rpm` | `nixos` | `nixpkgs` |
@@ -150,9 +156,10 @@ qvm-template remove nixos-26.05-xfce
 ### Recover or start again
 
 - Broken configuration, template still boots: rollback in section 3.
-- Replace its root from an RPM: `qvm-template --keyring ./template-key.asc reinstall ./TEMPLATE.rpm`.
+- Reinstall the template from an RPM: `qvm-template --keyring ./template-key.asc reinstall ./TEMPLATE.rpm`.
 - Full delete/build/install cycle: [recovery commands](docs/recovery.md).
-- Reinstallation replaces `/etc/nixos` and other root changes; back up first.
+- Reinstallation resets template root and private data; follow the backup steps
+  in the recovery guide first.
 
 ## 2. Use and change software
 
@@ -298,6 +305,7 @@ Keep `system.stateVersion` unchanged during routine upgrades.
 | `pkgs/` | Upstream guest-tool packaging |
 | `lib/` | Root image and native template RPM |
 | `scripts/`, `tests/` | Signing and checks |
+| `versions.txt` | Release changes and bug fixes |
 | `WHY.md`, `docs/` | Decisions, operation, tests and upstream proposals |
 
 [Complete file list](docs/files.md).

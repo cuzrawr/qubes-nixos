@@ -21,12 +21,12 @@ in
     networking.useDHCP = false;
     networking.hostName = lib.mkDefault "nixos";
     networking.firewall.enable = false;
-    # The Qubes guest scripts consume QubesDB addresses and routes. Do not run
+    # the Qubes guest scripts consume QubesDB addresses and routes. do not run
     # another automatic configurator on the Xen uplink.
     networking.useNetworkd = false;
     networking.resolvconf.enable = false;
     services.resolved.enable = true;
-    # Upstream's service conditions enable NetworkManager only in qubes whose
+    # upstream's service conditions enable NetworkManager only in qubes whose
     # network-manager service is enabled in dom0. Xen uplinks stay unmanaged.
     networking.networkmanager = {
       enable = lib.mkDefault true;
@@ -65,7 +65,7 @@ in
       "d /run/tinyproxy-updates 0755 tinyproxy tinyproxy -"
     ];
     boot.kernel.sysctl."net.ipv6.conf.*.drop_unsolicited_na" = 1;
-    # Upstream config-overrides/20_tcp_timestamps.conf.
+    # upstream config-overrides/20_tcp_timestamps.conf.
     boot.kernel.sysctl."net.ipv4.tcp_timestamps" = lib.mkDefault 0;
     systemd.services = {
       qubes-antispoof.requiredBy = [ "network-pre.target" ];

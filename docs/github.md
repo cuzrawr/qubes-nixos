@@ -14,6 +14,7 @@ Triggers: pushes to `main`, pull requests and manual runs.
 | Nix formatting | Yes |
 | Evaluation of stable/unstable XFCE, minimal and diagnostic outputs | Yes |
 | Existing path-adaptation tests | Yes |
+| XFCE/minimal audio defaults and optional activation | Configuration checks on both pins |
 | Signing helper build and its shell checks | Yes |
 | ASCII Markdown | Yes |
 | Complete images/RPMs | Local builder |

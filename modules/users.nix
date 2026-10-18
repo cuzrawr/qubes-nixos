@@ -30,10 +30,10 @@
           hashedPassword = lib.mkDefault "!";
         };
 
-    # As in the standard Qubes templates, isolation is between qubes. The
+    # as in the standard Qubes templates, isolation is between qubes. the
     # desktop user can administer its own qube without a separate password.
     security.sudo.wheelNeedsPassword = lib.mkIf config.services.qubes.passwordlessRoot.enable false;
-    # Preserve upstream Qubes' umask and Qt behavior for privileged commands.
+    # preserve upstream Qubes' umask and Qt behavior for privileged commands.
     security.sudo.extraConfig = ''
       Defaults umask = 0022
       Defaults umask_override

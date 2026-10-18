@@ -4,7 +4,7 @@
 
   config = lib.mkIf config.services.qubes.enable {
     # Qubes supplies the kernel, initramfs and matching /lib/modules over xvdd.
-    # Disabling the NixOS initrd selects its supported stage-2 activation entry.
+    # disabling the NixOS initrd selects its supported stage-2 activation entry.
     boot.kernel.enable = lib.mkDefault false;
     boot.initrd.enable = lib.mkDefault false;
     boot.loader.grub.enable = lib.mkDefault false;
@@ -22,11 +22,11 @@
       "xen_gntalloc"
     ];
     # nixpkgs emits this configuration only when it also builds the kernel.
-    # Stock NixOS kmod already searches the externally mounted /lib/modules.
+    # stock NixOS kmod already searches the externally mounted /lib/modules.
     environment.etc."modules-load.d/qubes.conf".text =
       lib.concatStringsSep "\n" config.boot.kernelModules + "\n";
     systemd.services.systemd-modules-load.wantedBy = [ "sysinit.target" ];
-    # NixOS normally tests its own kernel tree here. Use the modules supplied
+    # NixOS normally tests its own kernel tree here. use the modules supplied
     # by Qubes so static device nodes (loop-control, rfkill) work normally.
     systemd.services.kmod-static-nodes.unitConfig.ConditionFileNotEmpty = lib.mkForce [
       ""

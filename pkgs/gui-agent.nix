@@ -54,7 +54,7 @@ let
       // dependencies
       // {
         "/usr/lib/qubes/init/functions" = "${core-agent}/lib/qubes/init/functions";
-        # Optional GUI-domain backends, not needed by the normal guest session.
+        # optional GUI-domain backends, not needed by the normal guest session.
         "/usr/bin/Xephyr" = "/run/current-system/sw/bin/Xephyr";
         "/usr/bin/x11vnc" = "/run/current-system/sw/bin/x11vnc";
       }
@@ -64,6 +64,10 @@ in
 stdenv.mkDerivation {
   pname = "qubes-gui-agent";
   inherit (upstream) version src;
+  outputs = [
+    "out"
+    "audio"
+  ];
   nativeBuildInputs = [
     pkg-config
     autoconf
@@ -114,20 +118,35 @@ stdenv.mkDerivation {
   '';
   installPhase = ''
     runHook preInstall
-    make install-common install-systemd install-pipewire \
+    make install-common install-systemd \
       DESTDIR="$out" LIBDIR=/usr/lib SYSLIBDIR=/lib PA_VER_FULL=0 PA_MODULE_DIR=/unused
-    cp -a "$out/usr/." "$out/"
-    rm -r "$out/usr"
+    make install-pipewire \
+      DESTDIR="$audio" LIBDIR=/usr/lib SYSLIBDIR=/lib PA_VER_FULL=0 PA_MODULE_DIR=/unused
     ln -sfn "$out/bin/qubes-set-monitor-layout" "$out/etc/qubes-rpc/qubes.SetMonitorLayout"
     ln -sfn "$out/bin/qubes-start-xephyr" "$out/etc/qubes-rpc/qubes.GuiVMSession"
-    # Use the upstream XFCE session hooks with the NixOS-provided xinit entry.
+    # use the upstream XFCE session hooks with the NixOS-provided xinit entry.
     install -Dm755 -t "$out/etc/X11/xinit/xinitrc.d" appvm-scripts/etc/X11/xinit/xinitrc.d/*.sh
-    patchShebangs "$out"
-    python3 ${./relocate-paths.py} "$out" ${paths}
+    for output in "$out" "$audio"; do
+      cp -a "$output/usr/." "$output/"
+      rm -r "$output/usr"
+      patchShebangs "$output"
+      python3 ${./relocate-paths.py} "$output" ${paths}
+    done
     for dependency in ${lib.escapeShellArgs (lib.unique (builtins.attrValues dependencies))}; do
       test -x "$dependency" || { echo "Missing GUI dependency: $dependency" >&2; exit 1; }
     done
     runHook postInstall
+  '';
+  doInstallCheck = true;
+  installCheckPhase = ''
+    runHook preInstallCheck
+    test -x "$out/bin/qubes-gui"
+    test ! -e "$out/etc/qubes/post-install.d/20-qubes-pipewire.sh"
+    test -x "$audio/etc/qubes/post-install.d/20-qubes-pipewire.sh"
+    test -s "$audio/lib/pipewire-0.3/libpipewire-module-qubes.so"
+    test -s "$audio/share/pipewire/pipewire.conf.d/30_qubes.conf"
+    test -s "$audio/lib/systemd/user/pipewire.service.d/30_qubes.conf"
+    runHook postInstallCheck
   '';
   meta = {
     description = "Qubes GUI agent, Xorg drivers, session and PipeWire transport";

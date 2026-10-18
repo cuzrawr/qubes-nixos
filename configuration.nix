@@ -7,7 +7,7 @@
     updateVM.enable = true;
   };
 
-  # Edit this list, then rebuild in the TemplateVM.
+  # edit this list, then rebuild in the TemplateVM.
   environment.systemPackages = with pkgs; [
     atril
     claws-mail

@@ -10,7 +10,7 @@ rustPlatform.buildRustPackage {
   inherit (upstream) version src;
   buildInputs = [ linux-utils ];
   NIX_LDFLAGS = "-rpath ${linux-utils}/lib";
-  # Upstream ships no lock file; keep the dependency resolution with packaging.
+  # upstream ships no lock file; keep the dependency resolution with packaging.
   cargoLock.lockFile = ./notification-proxy.Cargo.lock;
   postPatch = ''
     cp ${./notification-proxy.Cargo.lock} Cargo.lock

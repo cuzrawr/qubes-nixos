@@ -19,8 +19,8 @@
 }:
 let
   # DNF 5 recognizes missing repository keys from librepo's RPM backend.
-  # Its GPGME backend reports a generic signature failure and prevents import.
-  # Select the upstream backend; do not change signature policy or program logic.
+  # its GPGME backend reports a generic signature failure and prevents import.
+  # select the upstream backend; do not change signature policy or program logic.
   updateDnf = dnf5.override {
     librepo = librepo.overrideAttrs (old: {
       cmakeFlags = old.cmakeFlags ++ [ "-DUSE_GPGME=OFF" ];

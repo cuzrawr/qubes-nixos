@@ -46,7 +46,7 @@ python3Packages.buildPythonPackage {
   buildPhase = ''
     runHook preBuild
     export NIX_LDFLAGS="$NIX_LDFLAGS -rpath $out/lib"
-    # The upstream top-level targets do not express the agent's library dependency.
+    # the upstream top-level targets do not express the agent's library dependency.
     make -j"$NIX_BUILD_CORES" all-base
     make -C agent -j"$NIX_BUILD_CORES" HAVE_PAM_APPL=1 os=NixOS BACKEND_VMM=xen
     runHook postBuild

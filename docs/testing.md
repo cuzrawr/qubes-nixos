@@ -1,261 +1,219 @@
-# Test results
+# Test coverage
 
-## 0.1.1 work in progress
+Results apply to the listed revisions, profiles and operations. A passing boot
+does not establish feature parity or support for untested devices.
+Confidence: high for recorded passes; untested cases are marked UNVERIFIED.
 
-No 0.1.1 release acceptance yet. Confidence: high in the individual results
-below; they do not establish coverage of unbuilt or untested artifacts.
+Release changes: [versions.txt](../versions.txt).
+Missing features and wider test gaps: [feature gaps](feature-gaps.md).
 
-| Check | Result |
-| --- | --- |
-| Four profile evaluations | Pass: stable/unstable XFCE and minimal |
-| Minimal candidate RPMs | Both built, signed and installed with native `qvm-template`; final artifacts pending |
-| Fresh minimal startup | Both pins: root qrexec, denied user sudo/su, locked root password, Xorg, proxy access, zero failed system/user units |
-| Stable minimal AppVM | Two boots, DNS/HTTPS, private persistence, root reset and privilege defaults passed |
-| Headless updates, both minimal pins | Concurrent starts shared one job; added software; update check preserved source lock; failed build retained generation/notification; rollback passed |
-| Full-profile refactor comparison | Both pins retain every selected package and the XFCE/audio, privilege, boot and Nix settings; only the native X11 font index is added |
-| Reproduce issue #1 on v0.1.0 stable | Pass: networked root growth hit the default 60-second qrexec timeout |
-| Diagnostic timeout increase | Boot took 129.2 seconds; resize failed at `udevadm settle` after 120 seconds; filesystem stayed smaller than volume |
-| Changed service order, networked stable boot | Pass: 12.29 seconds; resize 0.73 seconds; unchanged file checksum |
-| Repeat networked growth | Pass: startup 11.12 seconds; resize 0.79 seconds |
-| Live stable root growth | Pass: 1.83 seconds; filesystem expanded; unchanged checksum |
-| Network detach/reattach after growth | Pass: direct HTTPS recovered; no failed units |
-| Automated resize regression | Pass on stable and unstable: cold growth, live growth, data integrity, zero failed system/user units; default qrexec timeout |
-| Unstable networked resize startup | 10.40 seconds with pending growth; baseline 11.74 seconds |
-| Stable minimal, no NetVM | Cold/live growth and checksums passed; growth boot 9.90 seconds, baseline 10.14 seconds |
-| Minimal clipboard and files | Both directions passed between stable/unstable AppVMs; root Xterm administration passed on both |
-| Minimal networking | Both passed DNS/HTTPS, native firewall deny and recovery |
-| Enlarged template root inheritance | Stable minimal AppVM received the enlarged filesystem after template shutdown/restart |
+## Targets and artifacts
 
-The reproduction used an isolated clone. Only the service ordering changed
-for the successful comparison; upstream resize/network programs were unchanged.
-`tests/lab-resize.py` runs in dom0 on a dedicated, stopped test TemplateVM and
-grows its root by 2 GiB. Test with and without a NetVM.
-
-Pending: four final RPMs and fresh installs;
-optional-role checks; 0.1.0 upgrade with retained AppVM data and reviewed custom
-configuration. [Feature gaps](feature-gaps.md) lists wider untested cases.
-
-## Boot log comparison during 0.1.1 testing
-
-Checked dmesg, system/user journals, Xorg and dom0 qrexec/GUI/console logs.
-Fresh Fedora 43 and Debian 13 reference AppVMs used the same Qubes kernel.
-All reached a running state with zero failed system/user units.
-Confidence: high for these comparisons; a matching message is not proof that
-all consequences are harmless.
-
-| Diagnostic | Observed / action |
-| --- | --- |
-| PVH ACPI/PCI, nomodeset and IMA messages | Present in NixOS, Fedora and Debian |
-| Unsupported discard on private storage | Present in all three; depends on the virtual block device |
-| Xorg dummy-driver probe, VGA arbiter and missing render node | Present in all three |
-| NixOS missing font directories | Native indexed font directory and explicit Xorg lookup fixed the gap; both pins boot with valid font paths; stable fixed-font Xterm passed |
-| NixOS duplicate D-Bus registrations and graphical-seat setup | Still present; causes and upstream proposals in [adaptations](adaptations.md) |
-| Missing Xen `xl.conf` | Found by reviewing the full journal; registration of the packaged default is under test |
-| Unstable I/O-pressure threshold warning | Reproduced with systemd 261.2; inherited settings reject the setter with `EBUSY`. Actual user manager and API reproducer retain registered watches; [details](adaptations.md#systemd-inherited-io-pressure-threshold) |
-| Memory-hotplug write warning | Kernel tracing confirms successful Xen auto-online followed by udev's already-online result; 768 MiB allocation passed, all blocks online, zero failed units. Also reproduced in stock Fedora; [details](adaptations.md#qubeslinux-duplicate-memory-onlining) |
-| Xen CPU-count query errors | Reproduced in fresh Fedora and Debian; native device daemon remains active on all three |
-| Obsolete `StandardOutput=syslog` | Also present in stock Fedora and Debian services; systemd maps it to journal output |
-| Xorg missing acpid socket on NixOS | Remains visible; GUI and power-hook coverage are separate from physical suspend/resume |
-| Other stock-template diagnostics | Fedora logged a balloon allocation warning; Debian logged ALSA-rule and transient audio messages. These do not excuse unrelated NixOS failures |
-
-Headless-update tests pinned inputs to the recorded revisions to exercise
-integration changes without an unrelated package upgrade. Failure tests
-intentionally produced a failed update unit; successful rollback restored the
-baseline and zero failed units.
-
-## 0.1.0 release record
-
-Release [v0.1.0](https://github.com/cuzrawr/qubes-nixos/releases/tag/v0.1.0).
-Final artifact checks: 2026-10-07.
-Build source: [155d51a](https://github.com/cuzrawr/qubes-nixos/commit/155d51ab251e01c484949adeb064734ecd919711), signed tag `v0.1.0`.
-
-## Test targets
-
-| Component | Version |
+| Component | Tested version |
 | --- | --- |
 | Qubes OS / Xen | 4.3.1 / 4.19.4, x86_64 |
 | Stock Qubes VM kernel | `6.18.31-1.qubes.fc41.x86_64`, matching initramfs/modules |
 | Stable nixpkgs | `5e2305d577ca00acbba631b05cb1094d172b29f3` (26.05) |
 | Unstable nixpkgs | `e94cb152ed51bd6e24eb4a41f1460252beb52cd2` (26.11) |
 | Build tool | Nix 2.32.1; image finalization also tested without KVM |
+| Reference guests | Fedora 43 and Debian 13 with the same Qubes VM kernel |
 
-## Build and boot checks
+| Source/artifact | Coverage |
+| --- | --- |
+| [v0.1.0](https://github.com/cuzrawr/qubes-nixos/releases/tag/v0.1.0), signed tag and build commit [155d51a](https://github.com/cuzrawr/qubes-nixos/commit/155d51ab251e01c484949adeb064734ecd919711) | Published stable/unstable XFCE RPMs; final artifact checks on 2026-10-07 |
+| 0.1.1 candidate source `faa8433` | Four profile evaluations and system builds; source/runtime checks below |
+| 0.1.1 minimal candidate RPMs | Both signed and installed with native `qvm-template`; these are not the final release artifacts |
+| 0.1.1 final RPMs and repository | UNVERIFIED: four-profile fresh installation, packaged 0.1.0 upgrade and published repository acceptance |
+
+Source checks cover Nix formatting, flake evaluation, path-adaptation tests,
+signing-helper shell checks and ASCII Markdown. The
+[CI workflow](../.github/workflows/check.yml) runs these checks; it does not boot
+Qubes guests or replace runtime acceptance.
+
+## 0.1.1 source and minimal coverage
 
 | Check | Stable | Unstable |
 | --- | --- | --- |
-| Image build without KVM | Pass | Pass |
-| Native template RPM creation and external signing | Pass | Pass |
-| Signature-checked diagnostic RPM installation | Pass | Pass |
-| Stock PVH kernel reaches NixOS stage 2 | Pass | Pass |
-| Current/booted system links and matching Xen modules | Pass | Pass |
-| Second diagnostic boot after orderly shutdown | Pass | Pass |
-| Normal desktop RPM install, including post-install RPC | Pass | Pass |
-| Exact embedded source matches the signed build commit | Pass | Pass |
-| Normal TemplateVM/AppVM startup; zero failed system/user units | Pass | Pass |
-| AppVM second boot, private persistence and discarded root changes | Pass | Pass |
-| Networkless template UpdatesProxy and AppVM HTTPS | Pass | Pass |
-| Published repository installation | Pass: Template Manager GUI | Pass: `qvm-template` CLI |
-| AppVM private data preserved through template delete/install | Pass | Pass |
+| Full-profile selection comparison | Every selected package retained; native X11 font index added | Same |
+| Full-profile settings comparison | XFCE/audio, privilege, boot and Nix defaults retained except documented resize ordering | Same |
+| 0.1.0 source upgrade | Custom package and scalar option retained through rebuild and reboot; zero failed system/user units | Same |
+| Full-profile audio | Captured playback; synthetic microphone denied, allowed and revoked through native attachment | Same |
+| Minimal startup | Root qrexec, denied user sudo/su, locked root password, Xorg, update proxy; zero failed system/user units | Same |
+| Minimal AppVM persistence | Repeated boots; home and `/usr/local` retained, root changes discarded; template generation inherited | Same |
+| Minimal clipboard and files | Both directions between stable/unstable AppVMs | Same |
+| Minimal root Xterm | Administrator window and command execution | Same; default launch without font/resource overrides |
+| Minimal networking | DNS/HTTPS, native firewall deny and recovery | Same |
+| Headless minimal updates | Concurrent starts share one job; added software; check preserves lock file; failed build preserves generation/notification; rollback | Same |
+| Minimal optional roles | UNVERIFIED activation/removal combination | Audio units start; USB, Split GPG, UpdateVM and NetworkManager entry points appear; restoring minimal removes them and stops audio; zero failed units |
 
-Wrong-key verification rejected the RPM; verification with the matching public
-key accepted it. Diagnostic boot assertions are in
-[`tests/boot.nix`](../tests/boot.nix). Diagnostic images enable console autologin
-and must not be distributed as normal templates.
+- Source-upgrade checks use clones of the released XFCE templates. They retain
+  a custom package and cleanup setting in the original application selection.
+  They do not establish packaged RPM upgrade coverage.
+- Headless-update checks keep the recorded nixpkgs revisions to isolate the
+  integration. Failure cases deliberately fail the update unit; rollback
+  restores the baseline and zero failed units.
+- Optional-role checks verify activation and removal, not every device or
+  cross-qube workflow in the minimal profile.
+- Audio uses synthetic input. After revocation, the first 20 ms contained
+  previously buffered samples; a new tone was not delivered on either pin.
+- Final-artifact clipboard, file-transfer and other transport regressions are
+  UNVERIFIED until tested on the final installed RPMs.
 
-## Stable integration coverage
+## Root resize regression
 
-Coverage of the stable system closure included in v0.1.0:
+Coverage: cold growth, live growth, preserved file checksums, network recovery
+and failed system/user units. The regression uses the default 60-second qrexec
+timeout. Timings are observations, not startup guarantees.
 
-| Area | Checks completed |
+| Case | Result |
 | --- | --- |
-| Guest startup | QubesDB, qrexec, Xen modules, device permissions, root/user RPC and sudo |
+| Released 0.1.0 stable, pending root growth with a NetVM | Reproduces [issue #1](https://github.com/cuzrawr/qubes-nixos/issues/1): qrexec startup timeout |
+| Same case with a diagnostic timeout increase | Boot 129.2 seconds; `udevadm settle` fails after 120 seconds; filesystem remains smaller than volume |
+| 0.1.1 ordering, networked stable cold growth | Boot 12.29 seconds; resize 0.73 seconds; checksum retained |
+| Repeated networked stable growth | Boot 11.12 seconds; resize 0.79 seconds |
+| Stable live growth | 1.83 seconds; filesystem expanded; checksum retained |
+| Stable network detach/reattach after growth | HTTPS recovered; zero failed units |
+| Automated stable/unstable regression | Cold/live growth, checksums and zero failed system/user units passed |
+| Unstable networked cold growth | Boot 10.40 seconds; baseline 11.74 seconds |
+| Stable minimal without a NetVM | Cold/live growth and checksums passed; growth boot 9.90 seconds, baseline 10.14 seconds |
+| Stable minimal AppVM root inheritance | Enlarged template filesystem inherited after template shutdown and AppVM restart |
+
+The controlled comparison changes service ordering only; Qubes resize/network
+programs are unchanged. Run [`tests/lab-resize.py`](../tests/lab-resize.py) in
+dom0 on a dedicated, stopped test TemplateVM. It grows root by 2 GiB total.
+Test with and without a NetVM. Do not run it on a template containing needed data.
+
+Very large volumes, interrupted growth and every Qubes storage backend remain
+UNVERIFIED. User procedure: [resizing](resizing.md).
+
+## Published XFCE artifact coverage
+
+This section applies to both v0.1.0 RPMs unless stated otherwise. It is not a
+claim that every check has been repeated on the 0.1.1 artifacts.
+
+| Area | Checks passed |
+| --- | --- |
+| Build | Image finalization without KVM; native template RPM creation; separate signing |
+| Signature checks | Matching public key accepts the RPM; wrong key rejects it; signed checksums and published asset digests match |
+| Installation | Native RPM install and post-install RPC; all 58 embedded source files match the signed build commit |
+| Published repository | Stable through Template Manager; unstable through `qvm-template`; metadata/RPM verification through NixOS UpdateVMs |
+| Boot | Stock PVH kernel reaches NixOS stage 2; matching Xen modules; repeated TemplateVM/AppVM starts; zero failed system/user units |
+| Guest agents | Both: guest-agent startup; stable also explicitly checks QubesDB, root/user RPC, device permissions and sudo |
 | Persistence | AppVM home and `/usr/local` survive restart; root changes reset; template generation propagates after shutdown/restart |
-| Storage growth | Small root/private increases preserved data; later networked root growth exposed issue #1, documented above |
-| Networking | DNS/HTTPS, networkless-template UpdatesProxy, NixOS as NetVM, firewall deny/recovery |
-| Desktop | Xorg/XFCE windows, Firefox, labeled notifications, application menus refreshed after package changes |
-| Clipboard | Application copy/paste; native Qubes shortcuts between NixOS and Fedora in both directions, verified from saved text |
-| Files | Native file copy, Thunar copy-to-qube action, ordinary text/PDF/URL opening |
-| Disposables | Private/root isolation, application-specific MIME override, GUI editing round trip |
-| Converters | PNG dimensions/pixels; PDF page size/colors; password-protected PDF output |
-| Audio | Captured playback tone; synthetic microphone input only while native attachment permits it |
-| Devices | USB mass-storage attachment; read-only block export; synthetic USB export and input forwarding |
-| Backup | Encrypted native Qubes backup, restore and boot with preserved private data |
-| NixOS updates | Native update RPC adds software, survives activation and reaches dependent AppVMs |
-| Failure and rollback | Invalid configuration preserves active generation and pending-update notification; rollback works despite invalid source |
-| Split GPG 2 | Cross-qube signing/decryption; client cannot export private keys; upstream unit tests pass except upstream-skipped pinentry case |
-| RPC clients | Synchronous and asynchronous Python calls to native `qubes.GetDate` |
-| UpdateVM | Signed repository query/download, rejection of altered metadata, verified RPM download and dom0 update check |
-| Optional roles | UpdateVM and NetworkManager disabled configurations boot without failed units; disabled UpdateVM removes its helper link and RPCs |
-| Store maintenance | Identical files share storage; GC removes unreferenced objects while preserving rooted objects and every system generation; zero failed units afterward |
-| Maintenance settings | Native 1 GiB/3 GiB cleanup thresholds enabled; no automatic generation-deletion timer |
-| Guest power hooks | Suspend/resume preparation RPCs complete; networking works afterward |
+| Replace template | AppVM private data survives template delete/install and reassignment |
+| Networking | DNS/HTTPS, networkless-template UpdatesProxy, NixOS as NetVM, native firewall deny/recovery |
+| Desktop | Both: Xorg and Firefox launch; stable: XFCE windows, labeled notifications and menu refresh; unstable: native StartApp and Atril |
+| Clipboard | Copy/paste in applications and native Qubes shortcuts; stable/Fedora and stable/unstable transfers in both directions |
+| Files | Both: native file copy and PDF opening; stable: Thunar copy-to-qube and ordinary text/URL opening |
+| Disposables | Root/private isolation, application-specific MIME override, GUI editing round trip |
+| Conversion | Both: image/PDF conversion; stable: PNG dimensions/pixels, PDF page size/colors and password-protected PDF output |
+| Audio | Captured playback; synthetic microphone allowed only through native attachment; revocation blocks new input |
+| Devices | Both: USB mass-storage attachment, read-only block export and synthetic input forwarding; stable: synthetic USB export |
+| Backup | Encrypted Qubes backup, restore and boot with private data preserved |
+| NixOS update | Native GUI/RPC adds software, survives activation and propagates to AppVMs; failed build preserves generation and notification; rollback despite invalid source |
+| Update customization | Unstable: dotted configuration names, input overrides and unchanged lock file during update checks |
+| Split GPG 2 | Cross-qube signing/decryption; client cannot export private keys; upstream tests pass except the upstream-skipped pinentry case |
+| RPC clients | Stable: synchronous/asynchronous Python calls to `qubes.GetDate` |
+| UpdateVM | Both: dom0 update check without installing dom0 packages; stable: signed repository query/download, altered metadata rejection and verified RPM download |
+| Optional roles | Stable: disabled UpdateVM/NetworkManager configurations boot; disabled UpdateVM removes its helper and RPCs |
+| Store maintenance | Deduplication; GC removes unreferenced objects while preserving roots and all system generations; zero failed units |
+| Maintenance defaults | 1 GiB/3 GiB cleanup thresholds; no automatic generation-deletion timer |
+| Guest power hooks | Stable: suspend/resume preparation RPCs complete; networking works afterward |
 
-The audio permission test used synthetic input. Guest power-hook tests do not
-establish physical system suspend/resume coverage. Device tests used read-only
-data access or synthetic devices.
+- Guest power hooks do not test physical host suspend/resume.
+- Device tests use read-only access or synthetic devices; they do not cover
+  every class of USB, PCI, block or input device.
+- Small root/private increases preserve data. The networked root-growth
+  failure and its regression coverage are listed separately above.
+- Audio permission checks use synthetic signals, not physical microphones.
 
-## Unstable integration coverage
+Both release AppVMs pass `nix-store --verify --check-contents` after store
+optimisation. Each path audit checks 63 script interpreters and 52 RPC entries,
+including executable handlers, native TCP targets and optional policy sockets.
 
-The pinned 26.11 configuration also passed:
-
-- Native template installation and exact embedded-source verification.
-- Repeated TemplateVM/AppVM startup, zero failed system/user units, HTTPS and
-  networkless-template UpdatesProxy.
-- AppVM persistence, root reset and template-generation propagation.
-- Small root/private-volume growth, preserved data and filesystem expansion;
-  this did not cover the later networked resize regression.
-- Automatic store deduplication and garbage collection with all system
-  generations preserved; zero failed system/user units afterward.
-- Native update GUI/RPC, dotted configuration names, ordinary input overrides,
-  unchanged lock file during update checks, failed-update notification and rollback.
-- Clipboard and file copying in both directions between stable and unstable.
-- Read-only block export, USB mass-storage attachment and synthetic input forwarding.
-- Audio playback, synthetic microphone attachment and revocation. After revocation,
-  the first 20 ms contained previously buffered audio; a new tone was not delivered.
-- Network-provider routing and native firewall deny/recovery.
-- Encrypted Qubes backup/restore with preserved private data.
-- Disposable isolation, image/PDF conversion and disposable GUI editing.
-- Split GPG 2 signing/decryption with no client export of private keys.
-- Firefox through native StartApp, PDF opening in Atril and an Xorg session.
-- Native dom0 update check through the NixOS UpdateVM; no dom0 packages installed.
-
-Tests used the default system closures included in the release. Custom update
-options were also activated and exercised in the guest. Final RPM installations
-verified all 58 embedded source files against the signed build commit.
-
-## Published repository checks
-
-- Stable installed through Qubes Template Manager; unstable through `qvm-template`.
-- Downloads through NixOS UpdateVMs with metadata and RPM signature checks enabled.
-- Signed checksums verified with the public key; both RPM digests match the
-  published GitHub assets.
-- Both templates and AppVMs booted repeatedly with the expected generations,
-  working guest agents, Xorg and zero failed system/user units.
-- Existing AppVM home and `/usr/local` files survived the delete/install cycle.
-
-## Store integrity and entry points
-
-Both release AppVMs passed `nix-store --verify --check-contents` after store
-optimisation. On each variant, the path audit checked 63 script interpreters
-and 52 RPC entries. Executable handlers, native TCP targets and optional policy
-sockets matched their expected forms. No guest changes were needed.
+Diagnostic boot assertions are in [`tests/boot.nix`](../tests/boot.nix).
+Diagnostic images enable console autologin and are not distributable templates.
 
 ## Startup under load
 
-Three paired AppVM starts passed with unmodified Qubes defaults: 400 MiB initial
+Coverage: three paired v0.1.0 AppVM starts with Qubes defaults of 400 MiB initial
 RAM, 4000 MiB maximum, 2 vCPUs and a 60-second qrexec timeout.
 
 | Check | Stable | Unstable |
 | --- | --- | --- |
-| `qvm-start` completion, three runs | 17.23, 15.38, 16.11 seconds | 19.65, 19.14, 19.26 seconds |
-| Failed system/user units after startup | 0 / 0 | 0 / 0 |
-| Private persistence and root reset after restart | Pass | Pass |
-| Kernel OOM/allocation-failure messages | None observed | None observed |
+| `qvm-start`, three runs | 17.23, 15.38, 16.11 seconds | 19.65, 19.14, 19.26 seconds |
+| Failed system/user units | 0 / 0 | 0 / 0 |
+| Private persistence and root reset | Pass | Pass |
+| Kernel OOM/allocation failures | None observed | None observed |
 
-These checks cover simultaneous AppVM starts, not a concurrent template import.
-One concurrent install/start test exceeded the default qrexec startup timeout.
-Final serial installations and repeated boots passed with the default timeout.
-The concurrent timeout's cause remains unresolved.
+Concurrent template import and AppVM startup are not covered by this pass.
+One combined import/start test exceeds the default startup timeout; its cause
+is unresolved. Serial installs and repeated boots pass with the default timeout.
 
-## Journal diagnostics
+## Journal and kernel diagnostics
 
 Acceptance requires zero failed system and user units after successful
-operations. Upstream diagnostics remain visible:
+operations. Checks include dmesg, system/user journals, Xorg and dom0
+qrexec/GUI/console logs. Messages remain visible; exit codes are not suppressed.
 
-- Stock PVH ACPI/PCI warnings also occur in a Fedora comparison guest.
-- NixOS D-Bus broker reports duplicate service registrations while services
-  remain healthy.
-- Qubes' graphical-seat setup tries to persist a rule in a read-only NixOS
-  directory; GUI, clipboard and input tests pass despite that message.
-- An upstream memory-hotplug udev rule reported a failed write; all exposed
-  blocks were online. The later 0.1.1 investigation traced this warning to
-  duplicate onlining; see the comparison above.
-- Early external-initramfs handoff emits API-filesystem warnings.
+Fresh Fedora 43 and Debian 13 reference AppVMs reach a running state with zero
+failed system/user units. Confidence: high for the comparisons below; a matching
+message alone does not establish that all consequences are harmless.
 
-See [adaptations and upstream proposals](adaptations.md) for causes and scope.
+| Diagnostic | Coverage / finding |
+| --- | --- |
+| PVH ACPI/PCI, nomodeset and IMA | Present in NixOS, Fedora and Debian |
+| Unsupported discard on private storage | Present in all three; depends on the virtual block device |
+| Xorg dummy-driver probe, VGA arbiter, missing render node | Present in all three |
+| Xorg font lookup | Both 0.1.1 pins boot with valid indexed font paths; stable fixed-font Xterm and unstable default root Xterm pass |
+| NixOS duplicate D-Bus registrations and graphical-seat setup | Messages remain; related GUI, clipboard and input checks pass |
+| Xen `xl.conf` | Unstable minimal reboot: packaged configuration present, daemon active, no missing-file error |
+| Xen CPU-count query errors | Also present in Fedora/Debian; device daemon remains active on all three |
+| Obsolete `StandardOutput=syslog` | Also present in Fedora/Debian; systemd maps it to journal output |
+| Unstable I/O-pressure threshold | systemd 261.2 rejects an inherited-setting override with `EBUSY`; actual user manager and API reproducer retain registered watches |
+| Memory-hotplug write | Kernel trace: Xen auto-online succeeds, then udev receives already-online; 768 MiB allocation succeeds, all blocks online, zero failed units. Stock Fedora also reproduces the warning |
+| Xorg missing acpid socket | Present on NixOS; physical suspend/resume remains UNVERIFIED |
+| External-initramfs handoff | Early API-filesystem warnings remain visible |
+
+The pressure-watch check verifies registration, not event latency or storage
+performance. The hotplug result covers the traced duplicate-online case; an
+offline block, OOM or failed allocation requires separate investigation.
+[Causes and upstream proposals](adaptations.md).
 
 ## Shutdown
 
-Both NixOS variants completed native shutdown and final filesystem teardown.
+Both XFCE variants complete native shutdown and final filesystem teardown.
 The console is not error-free:
 
-- The first attempt to unmount `/lib/modules` reports `target is busy`.
-  `systemd-udevd` still maps module indexes. Late shutdown releases these and
-  unmounts the module filesystem successfully.
-- The same module-mount diagnostic was reproduced in stock Fedora 43 and
-  Debian 13 Qubes guests, at `/usr/lib/modules`.
-- `qubes-gui-agent` sometimes exits with status 1 during shutdown. This was
-  also reproduced in stock Fedora.
-- Shutting down while startup jobs are still running can interrupt those jobs
-  and initially leave `/home` busy. Final teardown still unmounted it.
+- Initial `/lib/modules` unmount reports `target is busy` while udev maps module
+  indexes; late teardown releases them and unmounts successfully. Fedora and
+  Debian show the same diagnostic at `/usr/lib/modules`.
+- `qubes-gui-agent` sometimes exits with status 1 during shutdown, also in Fedora.
+- Shutdown during unfinished startup jobs can interrupt them and initially
+  leave `/home` busy; final teardown unmounts it.
 
-Zero failed system/user units was verified while running, including after
-updates and maintenance. It does not describe every intermediate shutdown
-message. No failure codes are suppressed or reclassified as success.
+Zero failed units describes the running system after successful operations,
+not every intermediate shutdown message.
 
 ## Size and icons
+
+Measurements for the published v0.1.0 XFCE artifacts:
 
 | Measurement | Stable | Unstable |
 | --- | --- | --- |
 | System closure, NAR data | 5.347 GiB | 5.434 GiB |
 | Compressed signed RPM | 1.410 GiB | 1.438 GiB |
-| `nix-store --optimise` saving reported in a release AppVM | 73.0 MiB | 60.7 MiB |
+| `nix-store --optimise` reported saving in an AppVM | 73.0 MiB | 60.7 MiB |
 
-Closure size is not allocated disk usage. Native compression, debug stripping,
-documentation selection and one MBROLA voice per language reduce size without
-removing the default applications or Qubes roles.
+- Closure size, allocated disk use and compressed RPM size are different measures.
+- Store optimisation retains packages and generations. AppVM savings disappear
+  when root resets; run maintenance in the template for persistent savings.
+- RPM build macros retain about 301 MiB of compiler dependencies per closure.
+  The stock package remains. Mesa/LLVM supplies rendering; speech packages
+  supply accessibility.
+- The image copy step does not preserve hard links; see the
+  [image-builder proposal](adaptations.md#nixos-image-builder-preserve-hard-links).
 
-Full store optimisation retained the same system generations and packages.
-This measures deduplication of existing files, not a smaller replacement RPM.
-For a lasting saving, run it in the TemplateVM and restart dependent AppVMs
-after shutting the template down. The image builder's copy step is covered in
-[upstream proposals](adaptations.md#nixos-image-builder-preserve-hard-links).
-
-The size audit traced RPM's compiler dependency to its build macros. GCC and
-its exclusive dependencies account for about 301 MiB in each closure. The
-stock package is retained. Mesa/LLVM supplies software rendering, and the
-speech packages provide accessibility; these are not unused build leftovers.
-
-GraphicsMagick 1.3.47 and 1.3.48 reject quoted font names in some XFCE SVG icons.
-The same icons pass with 1.3.45. Qubes' unchanged image handler therefore leaves
-some menu icons missing; application launch and menu updates still work.
+GraphicsMagick 1.3.47/1.3.48 reject quoted font names in some XFCE SVG icons;
+the same icons pass with 1.3.45. The unchanged Qubes image handler leaves some
+menu icons missing. Application launch and menu updates pass.

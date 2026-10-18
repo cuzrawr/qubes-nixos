@@ -29,7 +29,7 @@ install -d -m700 "$GNUPGHOME"
 
 # For a new working identity; use its printed fingerprint below.
 gpg --quick-generate-key 'YOUR_RELEASE_IDENTITY' rsa3072 sign 0
-artifacts=../qubes-nixos-tmp/artifacts
+artifacts=../qubes-nixos_tmp/artifacts
 mkdir -p "$artifacts"
 rpm=qubes-template-nixos-26.05-xfce-4.3.0-2.noarch.rpm
 nix run .#sign-template -- YOUR_KEY_FINGERPRINT \
@@ -54,7 +54,7 @@ After signing, enter the publishing shell. Use a new, reviewed release tag:
 
 ```sh
 nix develop .#release
-artifacts=../qubes-nixos-tmp/artifacts
+artifacts=../qubes-nixos_tmp/artifacts
 tag=v0.1.1
 (cd "$artifacts" && sha256sum *.rpm > SHA256SUMS)
 gpg --local-user YOUR_KEY_FINGERPRINT --armor --detach-sign "$artifacts/SHA256SUMS"
@@ -135,9 +135,14 @@ qvm-template --repo-files ./qubes-nixos.repo install nixos-26.05-xfce
 ```
 
 `qvm-template upgrade TEMPLATE` replaces a template from its repository;
-`reinstall` reinstalls its packaged version. These replace root contents,
-including `/etc/nixos`, and differ from an in-template NixOS update. Back up the
-configuration or install a separately named replacement first.
+`reinstall` reinstalls its packaged version. In Qubes 4.3, both replace the
+TemplateVM root, including `/etc/nixos`, and clear its own private volume,
+including `/home` and `/usr/local`. Save configuration and files outside that
+TemplateVM first. Dependent AppVM private volumes remain separate.
+The post-install step also resets the template's NetVM to its default.
+Follow the [backup and upgrade procedure](recovery.md#010-to-011), then check
+the template's settings. An in-template NixOS rebuild does not replace these
+volumes. See the [Qubes post-install implementation][postinstall].
 
 Removing the `.repo` file stops future repository use. It does not remove
 templates. Remove them with `qvm-template remove TEMPLATE`, after switching
@@ -154,3 +159,5 @@ References: [Qubes templates](https://doc.qubes-os.org/en/latest/user/templates/
 [qvm-template](https://doc.qubes-os.org/projects/core-admin-client/en/latest/manpages/qvm-template.html),
 [GitHub release limits](https://docs.github.com/en/repositories/releasing-projects-on-github/about-releases),
 [Pages limits](https://docs.github.com/en/pages/getting-started-with-github-pages/github-pages-limits).
+
+[postinstall]: https://github.com/QubesOS/qubes-core-admin-client/blob/release4.3/qubesadmin/tools/qvm_template_postprocess.py

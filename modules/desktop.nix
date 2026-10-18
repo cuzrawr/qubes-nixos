@@ -24,7 +24,7 @@
     environment.xfce.excludePackages = [ pkgs.xfce4-notifyd ];
     programs.firefox.enable = lib.mkDefault true;
     environment.pathsToLink = [ "/etc/xdg/xfce4" ];
-    # Apply the same action fragment as upstream's Fedora/Debian post-install.
+    # apply the same action fragment as upstream's Fedora/Debian post-install.
     environment.etc."xdg/Thunar/uca.xml".source =
       pkgs.runCommand "qubes-thunar-actions.xml" { nativeBuildInputs = [ pkgs.libxml2 ]; }
         ''

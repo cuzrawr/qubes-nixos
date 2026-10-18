@@ -53,7 +53,7 @@
             ./profiles/base.nix
             profile
             ({ lib, ... }: {
-              # Retain the pinned nixpkgs source for local evaluation after install.
+              # retain the pinned nixpkgs source for local evaluation after install.
               nix.registry.nixpkgs.flake = source;
               nix.nixPath = [ "nixpkgs=${source}" ];
               services.qubes.updates.configuration = lib.mkDefault target;
@@ -93,7 +93,7 @@
           inherit contents;
         };
       image = configuration: imageWithContents configuration [ ];
-      # A writable copy, not an /etc symlink into the immutable store. The same
+      # a writable copy, not an /etc symlink into the immutable store. the same
       # ordinary flake can build the image and rebuild the installed TemplateVM.
       configurationContents = [
         {
@@ -118,7 +118,6 @@
         mkTemplate =
           {
             configuration,
-            name,
             contents ? [ ],
             ...
           }@args:
@@ -145,7 +144,7 @@
         nixos-unstable-minimal = minimalUnstable;
       };
 
-      packages.${system} = (import ./pkgs { pkgs = stable.pkgs; }) // rec {
+      packages.${system} = (import ./pkgs { inherit (stable) pkgs; }) // rec {
         default = template-rpm;
         template-rpm = self.lib.mkTemplate {
           configuration = template;
@@ -219,15 +218,29 @@
         meta.description = "Sign a built Qubes template RPM outside the Nix store";
       };
 
-      checks.${system}.path-adaptations =
-        stable.pkgs.runCommand "qubes-path-adaptation-tests"
-          {
-            nativeBuildInputs = [ stable.pkgs.python3 ];
-          }
-          ''
-            python3 ${./tests/test_paths.py} ${./pkgs/relocate-paths.py}
-            touch "$out"
-          '';
+      checks.${system} = {
+        path-adaptations =
+          stable.pkgs.runCommand "qubes-path-adaptation-tests"
+            {
+              nativeBuildInputs = [ stable.pkgs.python3 ];
+            }
+            ''
+              python3 ${./tests/test_paths.py} ${./pkgs/relocate-paths.py}
+              touch "$out"
+            '';
+
+        profiles = import ./tests/profiles.nix {
+          inherit (stable) pkgs;
+          full = [
+            template
+            templateUnstable
+          ];
+          minimal = [
+            minimal
+            minimalUnstable
+          ];
+        };
+      };
 
       devShells.${system}.release = stable.pkgs.mkShell {
         packages = with stable.pkgs; [

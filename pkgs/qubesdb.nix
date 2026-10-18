@@ -14,7 +14,7 @@ python3Packages.buildPythonPackage {
     pkg-config
     python3Packages.setuptools
   ];
-  # Upstream setup.py spawns Python for byte compilation; keep setuptools
+  # upstream setup.py spawns Python for byte compilation; keep setuptools
   # available in that interpreter as well (distutils left the Python stdlib).
   PYTHON = "${python3Packages.python.withPackages (ps: [ ps.setuptools ])}/bin/python3";
   buildInputs = [

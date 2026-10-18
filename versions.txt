@@ -1,0 +1,69 @@
+Noteworthy changes in release 0.1.1 (unreleased)
+
+* New templates
+
+  Stable and unstable minimal profiles provide Xorg, xterm, qrexec, clipboard,
+  file transfer and ordinary Qubes networking. Administration uses root qrexec
+  from dom0. Passwordless sudo/su and optional desktop roles are disabled.
+
+  XFCE templates retain their application selections. GUI, audio and privilege
+  settings are separate NixOS options shared by both profiles. Common Nix and
+  compatibility defaults are in profiles/base.nix.
+
+* Bug fixes
+
+  Run Qubes' unchanged root-resize helper after local network setup and before
+  qrexec. This avoids the reproduced early-boot udev/network dependency cycle
+  and qrexec timeout during root growth. The image layout is unchanged.
+
+  Supply NixOS's indexed font paths to the Qubes Xorg configuration. Retain
+  native fontPath, filesSection and serverFlagsSection customization.
+
+  Install Xen's packaged default xl.conf through NixOS to satisfy the device
+  daemon's configuration lookup.
+
+* Administration and upgrades
+
+  Headless updates use the existing qubes-nixos-update systemd service through
+  root qrexec. XFCE retains the graphical update RPC. The central Qubes updater
+  still has no NixOS backend.
+
+  Template RPM release increases from 1 to 2. Native RPM replacement overwrites
+  template root and clears its private volume, including /etc/nixos, /home and
+  /usr/local. Back up the template and copy needed files outside it first.
+  Existing AppVM private volumes stay separate. Updating integration source
+  can retain local configuration. Minimal uses separate template names; an
+  XFCE upgrade does not select minimal.
+
+  See docs/recovery.md for upgrade and rollback procedures, docs/resizing.md
+  for disk growth, and docs/testing.md for exact coverage and unverified cases.
+  Final release artifact acceptance is required before publication.
+
+
+Noteworthy changes in release 0.1.0
+
+* Initial release
+
+  Stable NixOS 26.05 and pinned unstable 26.11 XFCE TemplateVMs for Qubes 4.3,
+  x86_64, using the stock external PVH kernel, initramfs and modules.
+
+  Locked flake builds, native template RPMs, separate signing, GitHub Release
+  downloads and signed repository metadata for Qubes Template Manager.
+
+  Upstream guest tools with checked path/shebang adaptations: qrexec, GUI,
+  clipboard, files, disposables, audio, networking, device forwarding, Split
+  GPG 2 and optional UpdateVM support. No Qubes program-logic or dom0 patches.
+
+  Writable /etc/nixos configuration, normal NixOS rebuilds and rollback,
+  UpdatesProxy, update notifications and a graphical update RPC. Native store
+  deduplication and collection of unreferenced paths under space pressure;
+  deletion of rollback generations remains manual.
+
+* Known limitations
+
+  Networked root growth can block early boot and qrexec startup. Temporarily
+  disconnecting the template's NetVM permits recovery in the reproduced case.
+
+  The central Qubes updater has no NixOS backend. Some XFCE menu icons fail in
+  upstream GraphicsMagick. Known journal and shutdown diagnostics remain
+  visible; successful runtime checks require zero failed system/user units.

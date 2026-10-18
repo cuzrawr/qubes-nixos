@@ -39,8 +39,8 @@ python3Packages.buildPythonPackage {
   ];
   PYTHON = "${python3Packages.python.withPackages (ps: [ ps.setuptools ])}/bin/python3";
   enableParallelBuilding = true;
-  # The block backend is an ELF executable installed outside the usual binary
-  # directories. Strip its debug sections too, or they retain the C toolchain.
+  # the block backend is an ELF executable installed outside the usual binary
+  # directories. strip its debug sections too, or they retain the C toolchain.
   stripDebugList = [
     "bin"
     "sbin"

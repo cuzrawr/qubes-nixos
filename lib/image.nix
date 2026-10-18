@@ -19,13 +19,13 @@ lib.overrideDerivation
     partitionTableType = "hybrid";
     bootSize = "32M";
     diskSize = "auto";
-    # Leave room for evaluation and a replacement generation before collection.
+    # leave room for evaluation and a replacement generation before collection.
     additionalSpace = "4G";
     copyChannel = false;
     memSize = 768;
   })
   (_: {
-    # Image finalization must also work inside a qube, where KVM is unavailable.
+    # image finalization must also work inside a qube, where KVM is unavailable.
     requiredSystemFeatures = [ ];
     enableParallelBuilding = false;
   })

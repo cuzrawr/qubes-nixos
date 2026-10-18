@@ -12,7 +12,7 @@
     "flakes"
   ];
 
-  # This diagnostic is present only in the boot experiment, never a release.
+  # this diagnostic is present only in the boot test image, never a release.
   systemd.services.qubes-boot-test = {
     description = "Validate NixOS activation under the Qubes kernel";
     wantedBy = [ "multi-user.target" ];

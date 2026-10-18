@@ -7,7 +7,7 @@
     "nix-command"
     "flakes"
   ];
-  # Console diagnostics belong only to the test image.
+  # console diagnostics belong only to the test image.
   services.getty.autologinUser = "root";
   systemd.services.qubes-core-test = {
     description = "Validate Qubes guest service startup";

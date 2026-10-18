@@ -129,6 +129,9 @@ Sources: [updater dispatch](https://github.com/QubesOS/qubes-core-admin-linux/bl
 
 - Normal NixOS options select GUI, desktop, audio, USB/input, Split GPG 2,
   passwordless root and UpdateVM support.
+- Keep the unchanged `install-pipewire` output separate from GUI files. The
+  audio role selects its module, configuration, service drop-in and feature
+  announcement; minimal also disables NixOS's default PipeWire activation.
 - Installing components does not grant cross-qube access. Native service
   properties, device attachment and RPC policies control access.
 - UpdateVM uses unchanged Qubes helpers, DNF 5, RPM and fakeroot, including on
@@ -140,7 +143,8 @@ Sources: [updater dispatch](https://github.com/QubesOS/qubes-core-admin-linux/bl
   generic signature error and prevents key import. Verification stays enabled.
 
 Sources: [DNF key handling](https://github.com/rpm-software-management/dnf5/blob/5.4.2.1/libdnf5/repo/repo_sack.cpp),
-[librepo options](https://github.com/rpm-software-management/librepo/blob/1.20.0/CMakeLists.txt).
+[librepo options](https://github.com/rpm-software-management/librepo/blob/1.20.0/CMakeLists.txt),
+[audio installation target](https://github.com/QubesOS/qubes-gui-agent-linux/blob/v4.3.21/Makefile#L130).
 
 ## Minimal templates
 

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Run in dom0 on a disposable test TemplateVM. Grows root by 2 GiB total."""
+"""run in dom0 on a disposable test TemplateVM. grows root by 2 GiB total."""
+
 import hashlib
 import shlex
 import subprocess
@@ -11,11 +12,11 @@ import qubesadmin
 
 
 if len(sys.argv) != 2:
-    sys.exit("Usage: lab-resize.py STOPPED_TEST_TEMPLATE")
+    sys.exit("usage: lab-resize.py STOPPED_TEST_TEMPLATE")
 vm = qubesadmin.Qubes().domains[sys.argv[1]]
-assert vm.klass == "TemplateVM", "Use a dedicated test TemplateVM"
-assert not vm.is_running(), "Shut down the test template before this test"
-assert vm.qrexec_timeout == 60, "Use the normal 60-second qrexec timeout"
+assert vm.klass == "TemplateVM", "use a dedicated test TemplateVM"
+assert not vm.is_running(), "shut down the test template before this test"
+assert vm.qrexec_timeout == 60, "use the normal 60-second qrexec timeout"
 
 
 def run(command, user="root"):
@@ -27,10 +28,7 @@ def boot():
     subprocess.run(["qvm-start", vm.name], check=True)
     print(f"START seconds={time.monotonic() - start:.2f}", flush=True)
     assert run("systemctl is-system-running --wait") == "running"
-    run(
-        "for i in $(seq 1 30); do test ! -S /run/user/1000/bus || break; "
-        "sleep 1; done; test -S /run/user/1000/bus"
-    )
+    run("for i in $(seq 1 30); do test ! -S /run/user/1000/bus || break; sleep 1; done; test -S /run/user/1000/bus")
 
 
 def shutdown():
@@ -49,15 +47,15 @@ def grow():
 
 def check(previous_size):
     size = filesystem_bytes()
-    assert size > previous_size, "Root volume grew but its filesystem did not"
-    assert run("sha256sum " + marker).split()[0] == checksum, "Root file changed"
+    assert size > previous_size, "root volume grew but its filesystem did not"
+    assert run("sha256sum " + marker).split()[0] == checksum, "root file changed"
     for user in ("root", "user"):
         scope = "--user" if user == "user" else ""
         failed = run(
             f"XDG_RUNTIME_DIR=/run/user/1000 systemctl {scope} --failed --no-legend --plain",
             user=user,
         )
-        assert not failed, f"Failed {user} units: {failed}"
+        assert not failed, f"failed {user} units: {failed}"
     print(f"RESIZE_PASS filesystem_bytes={size}", flush=True)
     return size
 

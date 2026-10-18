@@ -31,9 +31,9 @@ in
       enable = true;
       displayManager.lightdm.enable = false;
     };
-    # Dom0 supplies the window manager. The guest has no login greeter or panel.
+    # dom0 supplies the window manager. the guest has no login greeter or panel.
     services.displayManager.enable = false;
-    # Qubes supplies the main Xorg config. Export NixOS's font directory to
+    # Qubes supplies the main Xorg config. export NixOS's font directory to
     # its Files section instead of relying on Xorg's compiled-in FHS paths.
     fonts.fontDir.enable = lib.mkDefault true;
     services.xserver.serverFlagsSection = lib.mkIf config.fonts.fontDir.enable (

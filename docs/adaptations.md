@@ -29,6 +29,7 @@
 | Keep normal MIME discovery separate from disposable overrides | Qubes applies its XDG override only for selected applications. Installing it globally would redirect ordinary file opening. |
 | Provide `qubes.InstallUpdatesGUI` for NixOS | Upstream explicitly supports a distribution-specific implementation. It runs ordinary flake updates and `nixos-rebuild`. |
 | Separate GUI/audio and privilege selections | Minimal shares the same guest tools but omits optional roles and passwordless root. Full XFCE defaults remain. Headless updates use the existing systemd job through root qrexec. |
+| Separate GUI and audio package outputs | Use upstream's `install-pipewire` target for the optional audio module, settings and feature announcement. Minimal explicitly disables native PipeWire unless this role is enabled. |
 | Set the update proxy environment for Nix | Both interactive evaluation and daemon downloads need the native UpdatesProxy forwarding socket. |
 | Provide one fixed UpdateVM helper path | Dom0 calls `/usr/lib/qubes/qubes-download-dom0-updates.sh`. A tmpfiles link exposes the packaged helper only while this optional role is enabled. |
 | Select librepo's upstream RPM verification backend for DNF 5 | The pinned GPGME backend reports missing keys as a generic signature error. DNF then fails before importing the configured repository key. No source or signature-policy change is made. |

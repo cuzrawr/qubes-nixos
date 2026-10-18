@@ -62,7 +62,7 @@ let
       // dependencies
       // {
         "/usr/share/tinyproxy/default.html" = "${tinyproxy}/share/tinyproxy/default.html";
-        # Optional programs are intentionally discovered in the active system.
+        # optional programs are intentionally discovered in the active system.
         "/usr/bin/kdialog" = "/run/current-system/sw/bin/kdialog";
         "/usr/bin/qubes-gui" = "/run/current-system/sw/bin/qubes-gui";
         "/usr/lib/qubes/qvm-convert-img.gnome" = "/run/current-system/sw/lib/qubes/qvm-convert-img.gnome";
@@ -126,7 +126,7 @@ python3Packages.buildPythonPackage {
   '';
   installPhase = ''
     runHook preInstall
-    # Select the upstream distribution-neutral installation targets.
+    # select the upstream distribution-neutral installation targets.
     make install-common install-systemd install-systemd-dropins install-networking install-netvm \
       install-networkmanager install-systemd-networking-dropins \
       DESTDIR="$out" SHELL=${bash}/bin/bash release=NixOS ENABLE_SELINUX=0 \
@@ -138,31 +138,31 @@ python3Packages.buildPythonPackage {
       "$out/lib/qubes-bind-dirs.d/30_cron.conf"
     install -Dm644 boot/session-stop-timeout.conf \
       "$out/lib/systemd/system/user@.service.d/90-session-stop-timeout.conf"
-    # The store cannot contain setuid programs. Preserve the upstream installer;
+    # the store cannot contain setuid programs. preserve the upstream installer;
     # NixOS security.wrappers will supply qfile-unpacker's privilege at activation.
     fakeroot make -C qubes-rpc install DESTDIR="$out" SHELL=${bash}/bin/bash
-    # The privilege belongs to security.wrappers, not the store executable.
-    # Clear setuid explicitly; Nix's setuid stripping also removes execute bits.
+    # the privilege belongs to security.wrappers, not the store executable.
+    # clear setuid explicitly; Nix's setuid stripping also removes execute bits.
     chmod 0755 "$out/usr/bin/qfile-unpacker" "$out/usr/lib/qubes/qfile-unpacker"
     # NixOS validates executable paths in udev rules at build time.
     substituteInPlace "$out/etc/udev/rules.d/99-qubes-network.rules" \
       --replace-fail /usr/bin/systemctl ${systemd}/bin/systemctl
     cp -a "$out/usr/." "$out/"
     rm -r "$out/usr"
-    # These RPCs and their DNF dependency belong to the optional UpdateVM role.
+    # these RPCs and their DNF dependency belong to the optional UpdateVM role.
     rm "$out/etc/qubes-rpc/qubes.TemplateSearch" \
       "$out/etc/qubes-rpc/qubes.TemplateDownload" \
       "$out/lib/qubes/qvm-template-repo-query"
-    # Packaged units belong in lib; /etc is reserved for host configuration.
+    # packaged units belong in lib; /etc is reserved for host configuration.
     mv "$out/etc/systemd/system/xendriverdomain.service" "$out/lib/systemd/system/"
-    # These links refer to the distribution's merged share directory, not this
-    # package's own files. Preserve that meaning in NixOS's system profile.
+    # these links refer to the distribution's merged share directory, not this
+    # package's own files. preserve that meaning in NixOS's system profile.
     for link in "$out/share/qubes/xdg-override/"*; do
       if [ -L "$link" ]; then
         ln -sfn "/run/current-system/sw/share/$(basename "$link")" "$link"
       fi
     done
-    # Upstream's RPM post-install creates its normal MIME defaults. NixOS uses
+    # upstream's RPM post-install creates its normal MIME defaults. NixOS uses
     # XDG configuration instead; keep the disposable override separate.
     rm "$out/share/applications/defaults.list"
     ln -sfn "$out/lib/qubes/qubes-setup-dnat-to-ns" \
@@ -174,10 +174,10 @@ python3Packages.buildPythonPackage {
       --replace-fail 'PATH=/usr/lib/qubes type qrexec-agent' 'PATH=${qrexec}/lib/qubes type qrexec-agent'
     substituteInPlace "$out/lib/qubes/init/qubes-iptables" \
       --replace-fail '/sbin/$IPTABLES' '${nftables}/bin/$IPTABLES'
-    # Interpreters become store paths before adapting references in script bodies.
+    # interpreters become store paths before adapting references in script bodies.
     patchShebangs "$out"
     python3 ${./relocate-paths.py} "$out" ${paths}
-    # A wrong output or relocated executable is a packaging failure, not a
+    # a wrong output or relocated executable is a packaging failure, not a
     # failure left for the first user of an RPC or a service to discover.
     for dependency in ${lib.escapeShellArgs (lib.unique (builtins.attrValues dependencies))}; do
       test -x "$dependency" || { echo "Missing guest dependency: $dependency" >&2; exit 1; }
@@ -186,7 +186,7 @@ python3Packages.buildPythonPackage {
   '';
   postFixup = ''
     # RPC handlers and helpers live outside bin, so the standard Python hook
-    # does not reach them. Use the same nixpkgs hook for these entry points.
+    # does not reach them. use the same nixpkgs hook for these entry points.
     wrapPythonProgramsIn "$out/lib/qubes" "$out ''${pythonPath[*]}"
     wrapPythonProgramsIn "$out/etc/qubes-rpc" "$out ''${pythonPath[*]}"
   '';
