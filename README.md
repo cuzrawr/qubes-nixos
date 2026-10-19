@@ -1,16 +1,23 @@
 # qubes-nixos
 
-NixOS TemplateVMs for Qubes OS 4.3, x86_64. Upstream guest tools, native
-clipboard and file transfer. XFCE desktop and minimal profiles.
+NixOS TemplateVMs for Qubes OS.
+
+XFCE desktop and minimal profiles.
+
+Upstream guest tools, native clipboard and file transfer and more...
+
 
 ## Fast template launch procedure
 
-Use Qubes' official Template Manager. One-time setup for Qubes 4.3.
+One-time setup, for people in a hurry:
+
+Use Qubes official Template Manager.
 
 1. In a networked qube, download
    [the repository file](https://cuzrawr.github.io/qubes-nixos/qubes-nixos.repo) and
    [the public key](https://cuzrawr.github.io/qubes-nixos/RPM-GPG-KEY-qubes-nixos)
    into `Downloads`.
+
 2. In dom0, replace `DOWNLOAD_QUBE` with that qube's name:
 
 ```sh
@@ -21,6 +28,7 @@ gpg --show-keys --with-fingerprint RPM-GPG-KEY-qubes-nixos
 
 Check the fingerprint:
 `4B90 5004 6403 DDD1 B6F1 FCF7 A752 8E30 ED60 389C`.
+
 Then install the two files:
 
 ```sh
@@ -30,34 +38,32 @@ qvm-template-gui
 ```
 
 3. Refresh repository data. Select `nixos-26.05-xfce` or
-   `nixos-unstable-xfce`, then Install. Wait until it appears under
-   Installed templates; downloading and importing can take several minutes.
-4. Create an AppVM in Qubes Manager, choose the installed template, then launch
-   Firefox or XFCE Terminal from that qube's application menu.
+   `nixos-unstable-xfce`, then Install.
+   Wait until it appears under Installed templates.
+   Downloading and importing can take several minutes.
+
+4. Create an AppVM in Qubes Manager, choose the installed template.
+
+5. Firefox under nixos or other apps available now  from qube's application menu.
 
 Later installations use the GUI directly.
-This is a third-party repository, separate from Qubes' official community list.
 
-- Configuration: ordinary writable NixOS flake in `/etc/nixos`.
-- Source: [GitHub](https://github.com/cuzrawr/qubes-nixos).
-- Version coverage: [test results](docs/testing.md).
-- Missing and untested features: [feature gaps](docs/feature-gaps.md).
-- Signed binaries: [GitHub Releases](https://github.com/cuzrawr/qubes-nixos/releases).
-- License: integration code unlicensed; upstream licenses unchanged.
 
-[Source checks](https://github.com/cuzrawr/qubes-nixos/actions/workflows/check.yml) |
-[Debian/Fedora comparison](docs/comparison.md)
 
 ## Versions
 
-Published binaries: v0.1.0 XFCE. The 0.1.1 source adds minimal profiles and a
-resize-ordering fix; final release tests are still in progress.
+Signed binaries: [GitHub Releases](https://github.com/cuzrawr/qubes-nixos/releases).
+
+Template Manager upgrades replace template root and clear its private volume,
+including `/etc/nixos`, `/home` and `/usr/local`
+
+Back up before upgrading!
+Read:
 
 [Release changes](versions.txt) |
-[0.1.0 to 0.1.1: back up, upgrade and check your qubes](docs/recovery.md#010-to-011).
-Template Manager upgrades replace template root and clear its private volume,
-including `/etc/nixos`, `/home` and `/usr/local`. Back up before upgrading;
-existing AppVM private volumes remain separate.
+[ updating & recovery](docs/recovery.md#010-to-011).
+
+
 
 | Variant | Template name | Build output | Configuration | Update input |
 | --- | --- | --- | --- | --- |
@@ -80,15 +86,19 @@ Exact revisions: [flake.lock](flake.lock). Boot rationale: [WHY.md](WHY.md).
 
 After the [one-time GUI setup](#fast-template-launch-procedure):
 
+
 ```sh
 qvm-template --repoid=qubes-nixos --refresh install nixos-26.05-xfce
 # Or: qvm-template --repoid=qubes-nixos --refresh install nixos-unstable-xfce
 ```
 
+
+
 ### Local build
 
 Requirements: x86_64 Linux, Nix with flakes, enough space for the store and image
-copies. KVM is optional. Build outside dom0.
+copies. KVM is optional.
+Build outside dom0.
 
 ```sh
 git clone https://github.com/cuzrawr/qubes-nixos
@@ -108,10 +118,15 @@ nix build .#template-rpm-unstable-minimal -o result-unstable-minimal
 Output: unsigned RPM in the selected result directory.
 [Sign with a separate working keyring](docs/distribution.md#sign-a-local-build).
 
+
+
 ### Install a signed RPM
 
-Download/build in a transfer qube. Verify the public key's fingerprint through a
-trusted channel. In dom0, set the matching RPM name:
+Download/build in a transfer qube.
+
+Verify the public key's fingerprint through a trusted channel.
+
+In dom0, set the matching RPM name:
 
 ```sh
 # Stable
@@ -137,6 +152,7 @@ The GUI uses configured repositories; it does not add arbitrary URLs.
 ### Remove
 
 1. Back up data; shut down the template and dependent qubes.
+
 2. Choose replacement templates in Qubes Manager or with `qvm-prefs`.
 3. Remove the old template:
 
@@ -155,7 +171,7 @@ qvm-template remove nixos-26.05-xfce
 
 ### Recover or start again
 
-- Broken configuration, template still boots: rollback in section 3.
+- Broken configuration, template still boots: rollback in section 3 [Restore a generation](docs/recovery.md).
 - Reinstall the template from an RPM: `qvm-template --keyring ./template-key.asc reinstall ./TEMPLATE.rpm`.
 - Full delete/build/install cycle: [recovery commands](docs/recovery.md).
 - Reinstallation resets template root and private data; follow the backup steps
@@ -165,6 +181,7 @@ qvm-template remove nixos-26.05-xfce
 
 1. Create an AppVM in Qubes Manager; select the installed template.
 2. Run applications in the AppVM.
+
 3. Edit `/etc/nixos/configuration.nix` in its TemplateVM:
 
 ```nix
@@ -183,14 +200,21 @@ Add/remove list entries, then rebuild:
 | Unstable minimal, root shell | `nixos-rebuild switch --flake /etc/nixos#nixos-unstable-minimal` |
 
 Shut down the template; restart its AppVMs. Menus refresh automatically.
-Firefox is controlled by `programs.firefox.enable`, not that package list.
+
+Tip: firefox is controlled by `programs.firefox.enable`, not that package list.
+
 Use Nix to manage guest software. The bundled DNF/RPM tools serve the UpdateVM
-role; they do not manage this NixOS installation.
+role; they do not manage this NixOS installation!
 
 XFCE applications: Firefox, Thunar, Mousepad, XFCE Terminal, Atril, Claws Mail,
 Galculator, Geany, KeePassXC, Xarchiver and XFCE utilities.
 
 ### Minimal templates
+
+minimal  does  not  mean  every  GUI  library  is  removed!
+
+
+The minimal profile aims for same feature and package parity with official Debian/Fedora-minimal Qubes templates:
 
 - Xorg, xterm, qrexec, clipboard, file transfer and ordinary Qubes networking.
 - No bundled desktop application set. Audio, USB/input forwarding, Split GPG,
@@ -207,13 +231,17 @@ Edit `/etc/nixos/configuration-minimal.nix`, for example:
 environment.systemPackages = [ pkgs.htop ];
 ```
 
-Use the matching minimal rebuild command above. Optional roles are ordinary
+Use the matching minimal rebuild command above.
+Optional roles are ordinary
 [NixOS options](docs/configuration.md#optional-components).
-The profile keeps required upstream dependencies; minimal does not mean every
-GUI library is removed.
+The profile keeps required upstream dependencies;
+
+
 
 Clipboard between qubes: copy in the source app, Ctrl+Shift+C, focus destination,
 Ctrl+Shift+V, paste in the destination app. Within a qube: normal app shortcuts.
+
+
 
 | Location/action | Behavior |
 | --- | --- |
@@ -224,8 +252,11 @@ Ctrl+Shift+V, paste in the destination app. Within a qube: normal app shortcuts.
 | Disposable changes | Discarded when the disposable stops |
 | Template rebuild while an AppVM runs | AppVM keeps its old root until restarted after template shutdown |
 
+
 [Critical settings and optional roles](docs/configuration.md): desktop, USB,
 Split GPG 2, UpdateVM, update proxy, boot, persistence, trust and disk use.
+
+
 
 ## 3. Update and maintain
 
@@ -239,7 +270,9 @@ above on minimal), then `cd /etc/nixos`:
 | Stable minimal | `nix flake update nixpkgs` | `nixos-rebuild switch --flake .#nixos-minimal` |
 | Unstable minimal | `nix flake update nixpkgs-unstable` | `nixos-rebuild switch --flake .#nixos-unstable-minimal` |
 
-Then `poweroff` and restart dependent AppVMs. Keep TemplateVMs without a NetVM;
+Then `poweroff` and restart dependent AppVMs.
+
+Keep TemplateVMs without a NetVM;
 Nix uses the native UpdatesProxy.
 
 Headless update for any profile, from dom0:
@@ -250,7 +283,7 @@ qvm-run -p --no-gui -u root TEMPLATE 'journalctl -u qubes-nixos-update.service -
 ```
 
 The first command waits and returns a failure status if the update fails.
-The systemd job owns the update; no terminal window is required.
+The systemd job owns the update;
 
 Graphical update for XFCE, from dom0:
 
@@ -258,6 +291,8 @@ Graphical update for XFCE, from dom0:
 qvm-run --service nixos-26.05-xfce qubes.InstallUpdatesGUI
 # Or: qvm-run --service nixos-unstable-xfce qubes.InstallUpdatesGUI
 ```
+
+KEEP IN MIND:
 
 - Closing the window leaves the update running.
 - Wait for "Update applied" before shutting down the template.
@@ -267,13 +302,18 @@ qvm-run --service nixos-26.05-xfce qubes.InstallUpdatesGUI
 - Failed activation: inspect system/user units and roll back; activation is not
   a transaction across all running services.
 
+if bad happened:
 ```sh
 sudo nixos-rebuild switch --rollback --no-reexec
 ```
-
-Rollback changes the generation, not edited source files. Restore those from
-version control; the update RPC keeps `/var/lib/qubes/flake.lock.previous`.
+This will Rollback changes the generation, not edited source files.
+the update RPC keeps `/var/lib/qubes/flake.lock.previous`.
 Shut down the template and restart its AppVMs afterward.
+Details in recovery.md
+
+_
+
+
 
 | Maintenance | Policy/command |
 | --- | --- |
@@ -308,15 +348,19 @@ Keep `system.stateVersion` unchanged during routine upgrades.
 | `versions.txt` | Release changes and bug fixes |
 | `WHY.md`, `docs/` | Decisions, operation, tests and upstream proposals |
 
+
 [Complete file list](docs/files.md).
 Custom flakes can import `nixosModules.qubes` and call `lib.mkTemplate`.
 Diagnostic `boot-test`, `core-test` and `desktop-test` images enable console
 autologin; they are not normal templates.
 
+
 Adaptations: checked paths/shebangs, Python wrappers, NixOS privilege wrappers,
 upstream service registration, resize ordering, Xorg session hooks, merged helper directories,
 Nix update RPC, one fixed UpdateVM helper link, and librepo's RPM backend.
-No Qubes protocol or dom0 patches. [Full list and tradeoffs](docs/adaptations.md).
+
+No Qubes protocol or dom0 patches! [Full list and tradeoffs](docs/adaptations.md).
+
 
 Upstream topics: external kernel modules/initramfs handoff, configurable Qubes
 paths, NixOS central updater, repository setup GUI, SVG icons, D-Bus duplicate
@@ -324,6 +368,20 @@ registration, graphical-seat setup, and DNF/librepo key handling.
 [Details and references](docs/adaptations.md#suggested-upstream-work).
 
 Known limitations: missing icons for some XFCE entries; documented upstream
-journal and [shutdown diagnostics](docs/testing.md#shutdown). Running-system
-checks require zero failed system and user units.
+journal and [shutdown diagnostics](docs/testing.md#shutdown).
+
+Running-system checks require zero failed system and user units.
 [GitHub Free: CI and distribution options](docs/github.md).
+
+
+_
+
+! This is a third-party repository !, separate from Qubes' official community list.
+
+- Source: [GitHub](https://github.com/cuzrawr/qubes-nixos).
+- Version coverage: [test results](docs/testing.md).
+- Missing and untested features: [feature gaps](docs/feature-gaps.md).
+- License: integration code unlicensed; upstream licenses unchanged.
+
+[Source checks](https://github.com/cuzrawr/qubes-nixos/actions/workflows/check.yml) |
+[Debian/Fedora comparison](docs/comparison.md)
