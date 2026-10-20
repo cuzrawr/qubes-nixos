@@ -13,9 +13,21 @@ let
   };
   spec = "${sources.template-builder.src}/qubesbuilder/plugins/template/template.spec";
 in
-assert pkgs.lib.assertMsg (
-  builtins.match "[a-zA-Z][a-zA-Z0-9_.-]*" name != null
-) "Template names must be valid Qubes VM names.";
+assert pkgs.lib.assertMsg
+  (
+    builtins.match "[a-zA-Z][a-zA-Z0-9_.-]*" name != null
+    && builtins.stringLength name <= 31
+    && !(builtins.elem name [
+      "Domain-0"
+      "none"
+      "default"
+    ])
+    && !(pkgs.lib.hasSuffix "-dm" name)
+  )
+  (
+    "Invalid Qubes template name '${name}': use 1-31 ASCII letters, digits, '_', '.' or '-', starting with a letter; "
+    + "reserved names and the '-dm' suffix are not allowed."
+  );
 pkgs.runCommand "qubes-template-${name}-${version}-${release}"
   {
     nativeBuildInputs = [

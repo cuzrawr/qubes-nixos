@@ -13,6 +13,8 @@ One-time setup, for people in a hurry:
 
 Use Qubes official Template Manager.
 
+Requires Qubes OS 4.3, x86_64.
+
 1. In a networked qube, download
    [the repository file](https://cuzrawr.github.io/qubes-nixos/qubes-nixos.repo) and
    [the public key](https://cuzrawr.github.io/qubes-nixos/RPM-GPG-KEY-qubes-nixos)
@@ -53,6 +55,9 @@ Later installations use the GUI directly.
 ## Versions
 
 Signed binaries: [GitHub Releases](https://github.com/cuzrawr/qubes-nixos/releases).
+
+The repository currently provides the two XFCE templates.
+Minimal profiles are available from source; their signed release is still pending.
 
 Template Manager upgrades replace template root and clear its private volume,
 including `/etc/nixos`, `/home` and `/usr/local`
@@ -240,6 +245,16 @@ The profile keeps required upstream dependencies;
 
 Clipboard between qubes: copy in the source app, Ctrl+Shift+C, focus destination,
 Ctrl+Shift+V, paste in the destination app. Within a qube: normal app shortcuts.
+
+Xterm needs its CLIPBOARD selection enabled in both source and destination.
+From dom0, repeat for each qube:
+
+```sh
+qvm-run MY_QUBE "xterm -xrm 'XTerm*selectToClipboard:true'"
+```
+
+Select text in that window before Ctrl+Shift+C. After Ctrl+Shift+V, use the
+middle mouse button to paste. [Qubes clipboard guide](https://doc.qubes-os.org/en/r4.3/user/how-to-guides/how-to-copy-and-paste-text.html).
 
 
 

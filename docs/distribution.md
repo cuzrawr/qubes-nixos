@@ -1,6 +1,6 @@
 # Distribute templates
 
-The project public key is [published here](../repository/RPM-GPG-KEY-qubes-nixos).
+Public key: [RPM-GPG-KEY-qubes-nixos](../repository/RPM-GPG-KEY-qubes-nixos).
 Fingerprint: `4B90 5004 6403 DDD1 B6F1 FCF7 A752 8E30 ED60 389C`.
 Published builds: [GitHub Releases](https://github.com/cuzrawr/qubes-nixos/releases).
 
@@ -15,12 +15,17 @@ The upstream template RPM spec supplies a GPLv3+ package label. The contained
 components retain their own licenses; this repository's integration source has
 no license grant.
 
-Keep private keys outside the repository, build inputs and template. Use a
-dedicated `GNUPGHOME` for all signing commands below.
+KEEP IN MIND:
+
+- Keep private keys outside the repository, build inputs and templates.
+- Use a dedicated `GNUPGHOME` for every signing command below.
+- Back up keys and revocation certificates offline. Never upload them to GitHub.
+- A compromised key requires revocation and a new client trust setup.
 
 ## Sign a local build
 
-From the source checkout:
+1. Build the selected RPM from the source checkout.
+2. Open the release shell and select a separate signing keyring:
 
 ```sh
 nix develop .#release
@@ -37,20 +42,20 @@ nix run .#sign-template -- YOUR_KEY_FINGERPRINT \
 gpg --armor --export YOUR_KEY_FINGERPRINT > "$artifacts/template-key.asc"
 ```
 
-Use the actual filename produced by the selected build; v0.1.0 uses release `1`,
-the 0.1.1 source uses `2`. Repeat for each variant being published.
-Existing working key: omit key generation. Keep this keyring outside the checkout;
-back it up separately. `sign-template` requires an explicit signing keyring.
-
-Back up signing keys and revocation certificates offline. Never upload them
-to GitHub. A compromised key requires revocation and a new client trust setup.
+- Use the filename produced by your build. v0.1.0 uses release `1`;
+  the 0.1.1 source uses `2`.
+- Already have a working key? Omit `gpg --quick-generate-key`.
+- Repeat signing for each variant. `sign-template` requires an explicit keyring.
+- The helper uses packaged RPM configuration; host/user RPM macros are ignored.
 
 ## GitHub Releases
 
-GitHub can host the signed RPMs as release assets. Users download them in a
-transfer qube and follow the local install instructions in the README.
+Users download signed RPMs in a transfer qube and follow the
+[local install instructions](../README.md#install-a-signed-rpm).
 
-After signing, enter the publishing shell. Use a new, reviewed release tag:
+1. Create and push the reviewed source tag.
+2. Put only that release's signed RPMs in `$artifacts`.
+3. Create checksums and a draft release. Use the same signing keyring:
 
 ```sh
 nix develop .#release
@@ -64,18 +69,21 @@ gh release create "$tag" --draft --verify-tag \
   "$artifacts/SHA256SUMS" "$artifacts/SHA256SUMS.asc"
 ```
 
-Create and push the reviewed source tag first. Review the draft and publish it
-in GitHub. Each asset must be under 2 GiB; check the actual signed RPM size.
-The builder uses Qubes' zstd level 19 payload compression. Larger variants need
-another RPM host. Do not split RPM files and call them a native repository.
+4. Review the draft, then publish it in GitHub.
+
+Each asset must be under 2 GiB. Check the signed RPM's actual size.
+The builder uses Qubes' zstd level 19 payload compression.
+Larger variants need another RPM host; split RPM files are not a native repository.
 
 ## Native repository with GitHub-hosted RPMs
 
-Host small RPM metadata on GitHub Pages and RPM payloads on GitHub Releases.
-The metadata's base URL points at that release's assets. This avoids putting
-multi-gigabyte RPMs in Git or a Pages site.
+| Content | Location |
+| --- | --- |
+| Signed RPMs | GitHub Releases |
+| Signed metadata, public key and client files | GitHub Pages |
+| Metadata's base URL | The matching release's assets |
 
-With only the intended signed RPMs in `$artifacts`, from the same shell:
+1. From the same shell, generate metadata for the intended signed RPMs:
 
 ```sh
 mkdir -p "$artifacts/rpm-repo"
@@ -86,12 +94,14 @@ createrepo_c \
 gpg --local-user YOUR_KEY_FINGERPRINT --armor --detach-sign "$artifacts/rpm-repo/repodata/repomd.xml"
 ```
 
-Copy only `repodata/` into `repository/rpm/r4.3/x86_64/`, together with the public
-key and client files already in `repository/`. The Pages workflow publishes that
-directory after verifying its metadata signature. Publish the exact same signed
-RPMs under that release. For later
-versions, rebuild metadata pointing to the new release; preserve old release
-assets for users who need them.
+2. Copy only `repodata/` into `repository/rpm/r4.3/x86_64/`.
+   Public key and client files are already in `repository/`.
+3. Publish the exact same signed RPMs under that release.
+4. Commit the public metadata. The Pages workflow verifies its signature before
+   publishing `repository/`.
+
+For later releases, rebuild metadata with the new release URL.
+Keep old release assets available for recovery.
 
 For an ordinary HTTPS server, upload the complete `$artifacts/rpm-repo/` directory
 and omit `--baseurl` when generating metadata. Keep the RPMs beside `repodata/`.
@@ -134,15 +144,19 @@ qvm-template --repo-files ./qubes-nixos.repo --refresh list --available
 qvm-template --repo-files ./qubes-nixos.repo install nixos-26.05-xfce
 ```
 
-`qvm-template upgrade TEMPLATE` replaces a template from its repository;
-`reinstall` reinstalls its packaged version. In Qubes 4.3, both replace the
-TemplateVM root, including `/etc/nixos`, and clear its own private volume,
-including `/home` and `/usr/local`. Save configuration and files outside that
-TemplateVM first. Dependent AppVM private volumes remain separate.
-The post-install step also resets the template's NetVM to its default.
+KEEP IN MIND:
+
+- `qvm-template upgrade TEMPLATE` replaces a template from its repository.
+- `reinstall` reinstalls its packaged version.
+- Both replace root and clear the TemplateVM's private volume, including
+  `/etc/nixos`, `/home` and `/usr/local`. Save needed files outside it first.
+- Dependent AppVM private volumes stay separate.
+- Post-install resets the template's NetVM to its default.
+- An in-template NixOS rebuild does not replace these volumes.
+
 Follow the [backup and upgrade procedure](recovery.md#010-to-011), then check
-the template's settings. An in-template NixOS rebuild does not replace these
-volumes. See the [Qubes post-install implementation][postinstall].
+the template's settings.
+Source: [Qubes post-install implementation][postinstall].
 
 Removing the `.repo` file stops future repository use. It does not remove
 templates. Remove them with `qvm-template remove TEMPLATE`, after switching

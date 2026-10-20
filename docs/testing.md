@@ -22,11 +22,12 @@ Missing features and wider test gaps: [feature gaps](feature-gaps.md).
 | --- | --- |
 | [v0.1.0](https://github.com/cuzrawr/qubes-nixos/releases/tag/v0.1.0), signed tag and build commit [155d51a](https://github.com/cuzrawr/qubes-nixos/commit/155d51ab251e01c484949adeb064734ecd919711) | Published stable/unstable XFCE RPMs; final artifact checks on 2026-10-07 |
 | 0.1.1 candidate source `faa8433` | Four profile evaluations and system builds; source/runtime checks below |
+| Source `d9263d0` | Four system builds; audio defaults/optional-role evaluation on both pins; stable minimal audio enable, transport, disable and reboot |
 | 0.1.1 minimal candidate RPMs | Both signed and installed with native `qvm-template`; these are not the final release artifacts |
 | 0.1.1 final RPMs and repository | UNVERIFIED: four-profile fresh installation, packaged 0.1.0 upgrade and published repository acceptance |
 
-Source checks cover Nix formatting, flake evaluation, path-adaptation tests,
-signing-helper shell checks and ASCII Markdown. The
+Source checks cover Nix formatting, flake evaluation, path adaptation, template
+name validation, signing isolation/failure cases and ASCII Markdown. The
 [CI workflow](../.github/workflows/check.yml) runs these checks; it does not boot
 Qubes guests or replace runtime acceptance.
 
@@ -40,7 +41,7 @@ Qubes guests or replace runtime acceptance.
 | Full-profile audio | Captured playback; synthetic microphone denied, allowed and revoked through native attachment | Same |
 | Minimal startup | Root qrexec, denied user sudo/su, locked root password, Xorg, update proxy; zero failed system/user units | Same |
 | Minimal AppVM persistence | Repeated boots; home and `/usr/local` retained, root changes discarded; template generation inherited | Same |
-| Minimal clipboard and files | Both directions between stable/unstable AppVMs | Same |
+| Minimal clipboard and files | Both directions between stable/unstable AppVMs; Xterm configured to use CLIPBOARD | Same |
 | Minimal root Xterm | Administrator window and command execution | Same; default launch without font/resource overrides |
 | Minimal networking | DNS/HTTPS, native firewall deny and recovery | Same |
 | Headless minimal updates | Concurrent starts share one job; added software; check preserves lock file; failed build preserves generation/notification; rollback | Same |
@@ -54,10 +55,30 @@ Qubes guests or replace runtime acceptance.
   restores the baseline and zero failed units.
 - Optional-role checks verify activation and removal, not every device or
   cross-qube workflow in the minimal profile.
+- Stable minimal at `d9263d0`: audio enabled and disabled through normal rebuilds
+  and reboots; captured playback and synthetic microphone deny/allow/revoke
+  passed. Disabled configuration has no PipeWire sockets or audio session hook.
+  Both states have zero failed system/user units. The same runtime cycle on
+  unstable at this source is UNVERIFIED.
+- Clipboard tests launch Xterm with `XTerm*selectToClipboard:true`.
+  Default-menu Xterm selection behavior is UNVERIFIED; use the
+  [configured command](../README.md#minimal-templates).
 - Audio uses synthetic input. After revocation, the first 20 ms contained
   previously buffered samples; a new tone was not delivered on either pin.
 - Final-artifact clipboard, file-transfer and other transport regressions are
   UNVERIFIED until tested on the final installed RPMs.
+
+### Device enumeration
+
+An unstable XFCE source-upgrade clone passed native USB attach/detach checks:
+
+| Device class | Verified | UNVERIFIED |
+| --- | --- | --- |
+| Camera | UVC driver bound; video device nodes present | Frame capture, applications and sustained streaming |
+| Bluetooth | btusb driver bound; HCI device present | Pairing and peripheral operation |
+
+Kernel warnings remain, including unsupported HCI LE Coded PHY usage.
+Enumeration alone does not establish device functionality.
 
 ## Root resize regression
 

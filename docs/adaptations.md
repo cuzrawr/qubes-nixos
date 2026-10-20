@@ -34,7 +34,7 @@
 | Provide one fixed UpdateVM helper path | Dom0 calls `/usr/lib/qubes/qubes-download-dom0-updates.sh`. A tmpfiles link exposes the packaged helper only while this optional role is enabled. |
 | Select librepo's upstream RPM verification backend for DNF 5 | The pinned GPGME backend reports missing keys as a generic signature error. DNF then fails before importing the configured repository key. No source or signature-policy change is made. |
 | Disable the image builder's KVM requirement | Qubes builders may have no `/dev/kvm`; upstream QEMU TCG can finalize the image. |
-| Keep a Cargo lock for the notification package | That upstream release has no lock file. The checked-in dependency resolution makes its Nix build reproducible. |
+| Keep a Cargo lock for the notification package | That upstream release has no lock file. The checked-in lock fixes Rust dependency versions and checksums. |
 
 - `pkgs/relocate-paths.py` runs at build time. Exact substitutions with path
   boundaries; skips binaries and symlinks. Audit records:

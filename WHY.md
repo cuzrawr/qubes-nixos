@@ -33,8 +33,9 @@ Sources: [26.05 announcement](https://nixos.org/blog/announcements/2026/nixos-26
   commands. Shut down the template and restart AppVMs after changes.
 - Persistent AppVM profiles do not preserve newly installed store objects when
   root resets. Install shared software in the TemplateVM.
-- Retain generations for rollback. RPM replacement replaces root, including
-  `/etc/nixos`; it is separate from an in-template NixOS rebuild.
+- Retain generations for rollback. RPM replacement replaces root and clears
+  the TemplateVM's private volume, including `/etc/nixos`, `/home` and
+  `/usr/local`. An in-template NixOS rebuild does not replace these volumes.
 - [Recovery](docs/recovery.md): configuration backups, rebuilds and replacement.
 
 Source: [Qubes template implementation](https://doc.qubes-os.org/en/r4.3/developer/system/template-implementation.html).
@@ -65,7 +66,7 @@ Source: [Qubes template implementation](https://doc.qubes-os.org/en/r4.3/develop
 | Drop-in under the original unit name | systemd cannot remove the existing `Before=local-fs.target` dependency through a drop-in |
 | Bare ext4 image without GPT | Supported by Qubes and the NixOS image builder; avoids this partition-resize branch for new images, but does not fix existing 0.1.0 roots |
 
-Keep the existing image layout for 0.1.1.
+Retain the existing image layout.
 [Configuration](docs/configuration.md#boot-and-service-ordering),
 [resizing procedure](docs/resizing.md).
 

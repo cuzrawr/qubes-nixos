@@ -1,14 +1,15 @@
 # Recovery and integration updates
 
-Applies to stable/unstable, XFCE/minimal and the stock external-kernel boot path.
-Commands inside a guest require root. Minimal: open a root terminal from dom0
-with `qvm-run -u root TEMPLATE xterm`; omit `sudo` inside that terminal.
+- Applies to stable/unstable, XFCE/minimal and the stock external-kernel boot path.
+- Rebuild and maintenance commands require root; status checks do not.
+- Minimal: run `qvm-run -u root TEMPLATE xterm` in dom0. Omit `sudo` in that terminal.
 
 ## 0.1.0 to 0.1.1
 
-0.1.1 is not released. Final RPM upgrade acceptance is still UNVERIFIED.
-Use these steps after publication. [Test coverage](testing.md),
-[release changes](../versions.txt).
+**Not released. Final RPM upgrade acceptance: UNVERIFIED.**
+
+Use these steps after publication.
+[Test coverage](testing.md) | [Release changes](../versions.txt).
 
 ### Choose the upgrade method
 
@@ -18,39 +19,46 @@ Use these steps after publication. [Test coverage](testing.md),
 | [Update integration source](#keep-a-customized-source-configuration) | Keeps reviewed local configuration; builds and activates a new NixOS generation |
 | Ordinary `nix flake update` | Updates package pins only; does not install this integration upgrade |
 
-RPM upgrade/reinstall removes the TemplateVM's custom `/etc/nixos`, software,
-generations, home files, `/usr/local` and other private-volume contents.
-Existing AppVM private volumes remain separate. This is the native Qubes 4.3
-[replacement behavior][postprocess], confirmed in the installed tool's source.
-Confidence: high. Back up the template and AppVMs before proceeding.
-[Qubes persistence][persistence].
+**Back up the template and AppVMs first.**
 
-The XFCE template names stay the same. Minimal templates are separate choices;
-this upgrade does not convert an XFCE template to minimal. RPM release changes
-from `4.3.0-1` to `4.3.0-2`.
+RPM upgrade/reinstall removes:
+
+- Template root: custom `/etc/nixos`, software and generations.
+- Template private data: home files, `/usr/local` and other private contents.
+
+Existing AppVM private volumes remain separate. This is native Qubes 4.3
+[replacement behavior][postprocess], confirmed in the installed tool's source.
+Confidence: high. [Qubes persistence][persistence].
+
+XFCE template names stay the same. Minimal templates are separate choices;
+an XFCE upgrade does not select minimal. Expected replacement RPM: `4.3.0-2`.
 
 ### 1. Identify the template and its qubes
 
-Open Qubes Manager. Sort by the Template column and note every qube using the
-one being upgraded, including disposable templates.
+In Qubes Manager:
+
+1. Sort by the Template column.
+2. Note every qube using the template, including disposable templates.
+3. Record custom template settings, especially networking.
 
 | Installed template | Matching 0.1.1 replacement |
 | --- | --- |
 | `nixos-26.05-xfce` | `nixos-26.05-xfce` |
 | `nixos-unstable-xfce` | `nixos-unstable-xfce` |
 
-In commands below, `TEMPLATE` means that exact installed name. `APP` means one
-of its AppVMs. Upgrade one template at a time.
+- `TEMPLATE`: the exact installed template name.
+- `APP`: one of its AppVMs.
+- Upgrade one template at a time.
 
-Record any custom template settings in Qubes Settings, especially networking.
-Native post-install processing resets the template's NetVM to its default.
+**Settings:** native post-install processing resets the template's NetVM to its
+default.
 
-For service qubes providing networking or input, arrange another provider before
-shutting them down. The backup destination and UpdateVM must remain usable.
+**Service qubes:** arrange another network/input provider before shutting them
+down. Keep the backup destination and UpdateVM usable.
 
 ### 2. Save custom configuration and back up
 
-If `/etc/nixos` was customized, open a terminal in the TemplateVM and run:
+If you customized `/etc/nixos`, run in the TemplateVM:
 
 ```sh
 umask 077
@@ -60,10 +68,14 @@ tar -tzf "$archive"
 qvm-copy "$archive"
 ```
 
-Choose a separate qube in the copy dialog. Check that the archive arrived and
-lists your files before continuing. Save any local files imported from outside
-`/etc/nixos` and needed template home or `/usr/local` files too. The archive must
-leave the TemplateVM: its home directory is cleared during RPM replacement.
+- Choose a separate qube in the copy dialog.
+- Check that the archive arrived and lists your files.
+- Also save imported files outside `/etc/nixos` and needed template home or
+  `/usr/local` files.
+
+**The archive must leave the TemplateVM.** RPM replacement clears its home.
+
+Then make a full Qubes backup:
 
 1. Save work and shut down the template's AppVMs, disposables and TemplateVM.
 2. Open **Backup Qubes** from the application menu. Move the TemplateVM and all
@@ -76,9 +88,9 @@ leave the TemplateVM: its home directory is cleared during RPM replacement.
    the option to verify integrity without restoring data. Select the backed-up
    qubes and finish verification. Stop if backup or verification reports an error.
 
-Integrity verification checks archive corruption; it does not prove that omitted
-files were backed up. Keep the archive until the replacement and applications
-have been checked. [Official backup/restore procedure][backup].
+**Verification:** checks archive integrity, not whether you selected every
+needed file/qube. Keep the backup until the replacement and applications work.
+[Official backup/restore procedure][backup].
 
 ### 3. Upgrade through Template Manager
 
@@ -89,9 +101,9 @@ have been checked. [Official backup/restore procedure][backup].
 4. Read the replacement warning, then start the upgrade. Wait for successful
    completion; do not shut down the computer during import.
 
-If no upgrade is offered, check that 0.1.1 is published and the
-[project repository is configured](../README.md#fast-template-launch-procedure).
-Do not remove the old template to force an upgrade.
+**No upgrade offered:** check publication and
+[repository setup](../README.md#fast-template-launch-procedure).
+Do not delete the old template to force an upgrade.
 
 Equivalent command in dom0, after replacing `TEMPLATE`:
 
@@ -99,8 +111,11 @@ Equivalent command in dom0, after replacing `TEMPLATE`:
 qvm-template --repoid=qubes-nixos --refresh upgrade TEMPLATE
 ```
 
-For a local RPM, transfer the matching signed file and verified public key as
-shown in the [README](../README.md#install-a-signed-rpm), then use **upgrade**:
+For a local RPM:
+
+1. Transfer the matching signed file and verified public key using the
+   [README procedure](../README.md#install-a-signed-rpm).
+2. Run **upgrade** in dom0:
 
 ```sh
 # stable; use the unstable filename for an unstable template
@@ -108,15 +123,16 @@ rpm=qubes-template-nixos-26.05-xfce-4.3.0-2.noarch.rpm
 qvm-template --keyring ./template-key.asc upgrade "./$rpm"
 ```
 
-The unstable filename is
-`qubes-template-nixos-unstable-xfce-4.3.0-2.noarch.rpm`.
-Both methods replace root and clear the TemplateVM's private volume.
+Unstable filename: `qubes-template-nixos-unstable-xfce-4.3.0-2.noarch.rpm`.
+
+**Both methods replace root and clear the TemplateVM's private volume.**
 [Native template commands][template-cli].
 
 ### 4. Check before resuming work
 
 1. Review the template's Qubes Settings against the recorded settings. Restore
-   any intentional networking selection, then start a terminal in the template:
+   any intentional networking selection, then open a normal user terminal in
+   the template. `systemctl --user` must check the desktop user's services:
 
 ```sh
 systemctl --failed
@@ -146,28 +162,35 @@ df -h /
 - While an AppVM is halted, select the restored template in its Qubes Settings.
   Test that AppVM before switching the others. Do not delete or recreate AppVMs.
 
-If a name conflict blocks restore, the native CLI can restore only the selected
-TemplateVM under another name. In dom0, substitute the backup qube, archive path
-inside that qube and original template name:
+If a name conflict blocks restore, use the native CLI in dom0:
+
+- `BACKUP_QUBE`: qube holding the backup.
+- `/path/to/BACKUP`: archive path inside that qube.
+- `TEMPLATE`: original template name.
 
 ```sh
 qvm-backup-restore --dest-vm BACKUP_QUBE --rename-conflicting /path/to/BACKUP TEMPLATE
 ```
 
-Read the restore summary for the new name. This restores the selected template,
-not its AppVMs. Restore AppVM data separately only if required; use a different
-name to inspect recovered files before replacing current data.
+- Read the restore summary for the new template name.
+- This restores only the selected TemplateVM.
+- Restore AppVM data separately only if needed. Use another name to inspect
+  recovered files before replacing current data.
+
 [Restore options][restore-cli].
 
-NixOS rollback cannot recover generations removed by RPM replacement. For a
-0.1.0 template stuck after disk growth, try the
-[resize recovery procedure](resizing.md#startup-timeout-on-010) before replacement.
+**NixOS rollback cannot recover generations removed by RPM replacement.**
+
+For a 0.1.0 template stuck after disk growth, try
+[resize recovery](resizing.md#startup-timeout-on-010) before replacement.
 
 ### Keep a customized source configuration
 
-Use [integration source updates](#update-the-integration-source) instead of RPM
-replacement. Tested on both XFCE pins with a custom package and scalar setting;
-this does not cover every local configuration. Confidence: high for those tests.
+Use [integration source updates](#update-the-integration-source) to retain local
+configuration.
+
+Coverage: both XFCE pins, with a custom package and scalar setting.
+Confidence: high for those tests; other custom configurations need testing.
 
 - Review `flake.nix`, `profiles/base.nix`, `modules/` and the profile selection
   together. Keep local packages, imported modules, update target/input and
@@ -194,8 +217,10 @@ sudo nixos-rebuild switch --rollback --no-reexec
 sudo poweroff
 ```
 
-Restart dependent AppVMs. Restore edited Nix files separately. Use Qubes backup
-restore for application data; Nix rollback does not roll back home directories.
+- Restart dependent AppVMs.
+- Restore edited Nix files separately.
+- Use Qubes backup restore for application data. Nix rollback does not restore
+  home directories.
 
 ## Rebuild from GitHub
 
@@ -213,12 +238,12 @@ nix build .#template-rpm -o result-stable
 nix build .#template-rpm-unstable -o result-unstable
 ```
 
-Use the tag or source commit from the matching [test/release record](testing.md).
-The 0.1.0 tag contains XFCE only. Minimal build targets first appear in 0.1.1;
-use their matching tag and the build-output table in the README.
-Keep `flake.lock`; do not update inputs while reproducing that version.
-[Sign the RPM](distribution.md#sign-a-local-build), then transfer it and the
-public key to dom0 using the README commands.
+- Select the tag or source commit from the matching [test record](testing.md).
+- The example tag contains XFCE only. For minimal, use its published tag and
+  the build-output table in the README.
+- Keep `flake.lock`. Do not update inputs while reproducing that version.
+- [Sign the RPM](distribution.md#sign-a-local-build), then transfer it and the
+  public key to dom0 using the README commands.
 
 ## Replace root without deleting AppVMs
 
@@ -242,9 +267,11 @@ qvm-template --keyring ./template-key.asc reinstall ./TEMPLATE.rpm
 5. Start the template; check guest services; shut it down.
 6. Restart one AppVM and check it before restarting the others.
 
-Reinstallation replaces template root and clears its private volume, including
-its home and `/usr/local`. Existing AppVM private data stays separate. Reapply
-reviewed settings and restore needed template files after checking its boot.
+**Reinstallation replaces root and clears the template's private volume,**
+including home and `/usr/local`. Existing AppVM private data stays separate.
+
+Check the template boots before reapplying reviewed settings and restoring its
+needed files.
 
 ## Install a newer template RPM
 
@@ -256,17 +283,20 @@ qvm-template --repoid=qubes-nixos --refresh upgrade nixos-26.05-xfce
 # Or: qvm-template --repoid=qubes-nixos --refresh upgrade nixos-unstable-xfce
 ```
 
-This replaces template root and clears its private volume. Existing AppVM
-private data stays separate. Use the README's in-template NixOS update procedure
-to retain and rebuild your configuration instead. A smaller replacement image
-does not remove retained Qubes volume revisions.
+- Replaces template root and clears its private volume.
+- Existing AppVM private data stays separate.
+- To retain your configuration, use the README's in-template NixOS update
+  procedure instead.
+- A smaller replacement image does not remove retained Qubes volume revisions.
 
 Source: [native template commands](https://doc.qubes-os.org/projects/core-admin-client/en/latest/manpages/qvm-template.html).
 
 ## Complete delete/install cycle
 
-Use this when replacement through `reinstall` is unsuitable. Keep AppVMs halted
-while temporarily assigning their template property elsewhere.
+Use this when `reinstall` is unsuitable.
+
+**Complete the [backup steps](#2-save-custom-configuration-and-back-up) first.**
+Keep AppVMs halted while temporarily assigning them to another template.
 
 ```sh
 # dom0: choose the installed template name from the README table
@@ -292,8 +322,8 @@ qvm-start MY_APP
 
 ## Update the integration source
 
-`nix flake update` refreshes nixpkgs; it does not update this repository's modules,
-Qubes component pins or packaging.
+`nix flake update` refreshes the flake inputs. It does not update this repository's
+modules, Qubes component pins or packaging.
 
 1. Back up `/etc/nixos` and record the current generation.
 2. Obtain the intended GitHub source commit on a builder or in a temporary clone.
@@ -303,9 +333,12 @@ Qubes component pins or packaging.
 5. Run `nix flake check`, then the matching `nixos-rebuild switch --flake` command.
 6. Check system and user units; shut down the template; test one restarted AppVM.
 
-For configurations managed in Git, merge the selected upstream commit normally.
-The shipped `/etc/nixos` copy has no `.git` directory; do not assume `git pull`
-works there. Avoid copying a new default `configuration.nix` over your changes.
+- Already managed in Git: merge the selected upstream commit normally.
+- Shipped `/etc/nixos`: no `.git` directory, so `git pull` does not work there.
+- Do not overwrite local changes with a new default `configuration.nix`.
 
-For a major NixOS release, build a separately named template, test it, then
-reassign AppVMs. Keep the old template until the replacement and backups work.
+For a major NixOS release:
+
+1. Build a separately named template.
+2. Test it before reassigning AppVMs.
+3. Keep the old template until the replacement and backups work.

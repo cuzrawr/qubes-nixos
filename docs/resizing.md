@@ -1,6 +1,6 @@
 # Increase disk space
 
-Applies to stable and unstable, XFCE and minimal. Stock Qubes kernel/initramfs.
+Stable/unstable, XFCE/minimal. Stock Qubes kernel/initramfs.
 
 ## Choose the right disk
 
@@ -10,8 +10,10 @@ Applies to stable and unstable, XFCE and minimal. Stock Qubes kernel/initramfs.
 | An AppVM's downloads, documents, `/home` | That AppVM: private storage |
 | Both in a StandaloneVM | Its root or private storage, as appropriate |
 
-Check Qubes' disk-space widget first. A larger virtual disk does not add space
-to the physical storage pool. These instructions only grow disks.
+**Check Qubes' disk-space widget first.**
+
+- A larger virtual disk does not add physical storage.
+- These instructions only grow disks.
 
 ## GUI procedure
 
@@ -32,7 +34,9 @@ qvm-run -p -u root QUBE 'df -h / /rw'
 
 ## Command line
 
-Run in dom0. Sizes are the new total, not the amount to add.
+Run in dom0.
+
+**Sizes are the new total, not the amount to add.**
 
 ```sh
 # Software space: grow the template root to 24 GiB.
@@ -54,9 +58,11 @@ qvm-run -p -u root APP 'df -h /rw'
 
 ## Startup timeout on 0.1.0
 
-Confirmed case: a pending root resize plus a NetVM can deadlock early boot.
-Increasing `qrexec_timeout` alone can leave the filesystem unchanged.
+Pending root growth plus a NetVM can block early boot.
 Confidence: high; reproduced with the released stable image.
+
+**Increasing `qrexec_timeout` alone does not fix this case.**
+The filesystem can remain unchanged.
 
 1. Leave dependent AppVMs stopped.
 2. In the TemplateVM's Settings, note its current networking choice. Select
@@ -65,9 +71,11 @@ Confidence: high; reproduced with the released stable image.
 4. Shut it down; restore the networking choice if changed.
 5. Start one dependent AppVM and check it before starting the rest.
 
-The 0.1.1 source changes the resize service ordering; release acceptance is
-tracked in [testing](testing.md). For another startup failure, collect the
-console and journal instead of repeatedly increasing timeouts:
+The later service ordering is described in
+[configuration](configuration.md#boot-and-service-ordering).
+Check [test coverage](testing.md) before selecting an upgrade.
+
+For another startup failure, save the console and journal:
 
 ```sh
 # In a bootable guest, as root:

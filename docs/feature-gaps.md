@@ -1,15 +1,16 @@
 # Missing and untested features
 
 Target: Qubes 4.3 with its external PVH kernel.
-[Test coverage](testing.md) lists the versions, profiles and checks that passed.
-Results for one profile do not establish support in every profile.
 
-Confidence: high for the package/module inventory and recorded coverage.
-Untested features are not known to work or fail.
+- [Test coverage](testing.md) lists the versions, profiles and checks that passed.
+- A pass in one profile does not establish support in every profile.
+- **Untested does not mean broken or working.**
+
+Confidence: high for the package/module inventory and recorded tests.
 
 ## Not included
 
-These need packaging or integration before this project can support them.
+These need packaging or integration before they can be supported.
 
 | Feature | Missing part |
 | --- | --- |
@@ -23,13 +24,13 @@ These need packaging or integration before this project can support them.
 | [Snap, Thunderbird and idle shutdown helpers][minimal] | `qubes-snapd-helper`, Qubes Thunderbird integration and `qubes-app-shutdown-idle` |
 | [Guest kernel/initrd][kernels] | No NixOS kernel/initrd or HVM boot profile; shipped profiles use the Qubes external PVH kernel |
 
-[Contributed packages][contrib] also need Nix packaging and tests. RPM/APT
-installation instructions cannot be used to install them into NixOS.
+**Contributed packages:** need Nix packaging and tests too.
+Their [RPM/APT instructions][contrib] cannot install them into NixOS.
 
 ## Not yet tested
 
-These cases are outside the recorded coverage, including features that have
-passed narrower tests. A package or service being present is not an end-to-end test.
+These cases have no recorded test, even where narrower tests passed.
+**An installed package or service is not proof that the workflow works.**
 
 | Area | Untested cases |
 | --- | --- |
@@ -47,8 +48,11 @@ passed narrower tests. A package or service being present is not an end-to-end t
 | NixOS rebuilds | Power loss during activation, root volume exhausted during a rebuild |
 | [StandaloneVMs][standalones] | Creation from these templates, independent updates and persistent system changes |
 
-See [test coverage](testing.md) for release-specific install, upgrade and
-regression checks. See [known diagnostics](adaptations.md) for observed issues.
+[Install, upgrade and regression coverage](testing.md) |
+[Known diagnostics](adaptations.md).
+
+Camera and Bluetooth driver enumeration passed on an unstable XFCE clone.
+Capture, pairing and actual peripheral use remain untested.
 
 ## Other setups
 
@@ -62,10 +66,13 @@ No tested NixOS instructions are supplied for these workflows:
 - [Localization][locale]: layouts, input methods, fonts and translated applications.
 - [MAC randomization][mac]: physical network devices and reconnect behavior.
 
-The list covers the [Qubes documentation index][index], linked guides and
-selected forum workflows, not every forum thread. Host installation, disk
-encryption, Anti Evil Maid, dom0 login/MFA and hardware certification are outside
-this template. Dom0 policy and device permissions remain Qubes configuration.
+Scope:
+
+- [Qubes documentation][index], linked guides and selected forum workflows.
+  Not every forum thread.
+- Host installation, disk encryption, Anti Evil Maid, dom0 login/MFA and
+  hardware certification are outside this template.
+- Dom0 policy and device permissions remain Qubes configuration.
 
 [index]: https://doc.qubes-os.org/en/r4.3/index.html
 [minimal]: https://doc.qubes-os.org/en/r4.3/user/templates/minimal-templates.html

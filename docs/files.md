@@ -74,7 +74,9 @@ tests/desktop.nix
 tests/lab-network.py
 tests/lab-resize.py
 tests/profiles.nix
+tests/template-rpm.nix
 tests/test_paths.py
+tests/test_signing.py
 versions.txt
 ```
 

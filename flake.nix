@@ -174,6 +174,7 @@
         };
         sign-template = stable.pkgs.writeShellApplication {
           name = "sign-template";
+          runtimeEnv.QUBES_NIXOS_RPM_CONFIG = "${stable.pkgs.rpm}/lib/rpm";
           runtimeInputs = with stable.pkgs; [
             coreutils
             rpm
@@ -219,6 +220,8 @@
       };
 
       checks.${system} = {
+        template-rpm = import ./tests/template-rpm.nix { inherit (stable) pkgs; };
+
         path-adaptations =
           stable.pkgs.runCommand "qubes-path-adaptation-tests"
             {
@@ -226,6 +229,22 @@
             }
             ''
               python3 ${./tests/test_paths.py} ${./pkgs/relocate-paths.py}
+              touch "$out"
+            '';
+
+        signing =
+          stable.pkgs.runCommand "qubes-template-signing-tests"
+            {
+              nativeBuildInputs = with stable.pkgs; [
+                python3
+                rpm
+                gnupg
+              ];
+            }
+            ''
+              python3 ${./tests/test_signing.py} \
+                ${self.packages.${system}.sign-template}/bin/sign-template \
+                ${stable.pkgs.rpm}/lib/rpm
               touch "$out"
             '';
 

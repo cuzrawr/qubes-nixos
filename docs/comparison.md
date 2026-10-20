@@ -1,12 +1,15 @@
 # Compared with Debian and Fedora templates
 
-Target: Qubes 4.3. See [tested versions and results](testing.md) and the
-[missing and untested features](feature-gaps.md). Confidence: high for the
-listed implementations and recorded tests; complete feature parity is not claimed.
+Target: Qubes 4.3.
+[Test coverage](testing.md) | [Missing and untested features](feature-gaps.md).
 
-Official Fedora and Debian each provide XFCE, GNOME and minimal profiles: six
-in total. This project provides four NixOS profiles: stable/unstable XFCE and
-stable/unstable minimal. [Official template list](https://doc.qubes-os.org/en/r4.3/user/templates/templates.html#official).
+Confidence: high for the listed implementations and tests.
+**Complete feature parity is not claimed.**
+
+- Fedora/Debian: each has XFCE, GNOME and minimal; six official profiles.
+- NixOS: stable/unstable XFCE and stable/unstable minimal; four profiles.
+
+[Official template list](https://doc.qubes-os.org/en/r4.3/user/templates/templates.html#official).
 
 | Feature | This NixOS template | Qubes Debian/Fedora templates |
 | --- | --- | --- |
@@ -29,14 +32,15 @@ stable/unstable minimal. [Official template list](https://doc.qubes-os.org/en/r4
 | CTAP, Salt-managed guests, GUIVM/AudioVM provider roles | Missing project integration; see the inventory | Separate Qubes guest packages and documented setups |
 | Support scope | Versions and checks listed in the test record | Qubes-supported distribution releases |
 
-For Debian/Fedora AppVMs, create a new NixOS qube and migrate application data.
-Changing the template alone does not migrate distribution-specific settings.
+**Moving from Debian/Fedora:** create a NixOS qube and migrate application data.
+Changing an existing qube's template does not migrate distribution-specific settings.
 
 ## Commands and workflow
 
-Run package and configuration commands as root inside the TemplateVM.
-On XFCE, use `sudo -i`. On minimal, open a root terminal from dom0 with
-`qvm-run -u root TEMPLATE xterm`.
+Run guest package/configuration commands as root in the TemplateVM:
+
+- XFCE: `sudo -i`.
+- Minimal: run `qvm-run -u root TEMPLATE xterm` in dom0.
 
 For NixOS, replace `CONFIG` with `nixos`, `nixos-unstable`, `nixos-minimal` or
 `nixos-unstable-minimal`. Edit `configuration.nix` for XFCE or
@@ -51,10 +55,11 @@ For NixOS, replace `CONFIG` with `nixos`, `nixos-unstable`, `nixos-minimal` or
 | Roll back the system generation | `nixos-rebuild switch --rollback --no-reexec` | No equivalent whole-system generation; restore a backup or follow package-specific recovery | No equivalent whole-system generation; restore a backup or follow package-specific recovery |
 
 Package commands: [Qubes installation guide][install], [APT][apt], [DNF][dnf].
-The [Qubes updater][updates] is the normal Debian/Fedora update path; its NixOS
-backend is missing. The NixOS service updates the selected flake inputs and
-rebuilds. It does not update this project's integration files; see
-[release upgrades](recovery.md).
+
+**Updates:** use [Qubes Update][updates] for Debian/Fedora. Its NixOS backend is
+missing. The NixOS service refreshes selected flake inputs and rebuilds;
+it does not update this project's integration files.
+[Integration updates](recovery.md).
 
 - NixOS: edit the desired package/service configuration, build, then activate.
   Keep `/etc/nixos` in version control. A rollback restores a retained system

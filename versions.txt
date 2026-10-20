@@ -22,6 +22,15 @@ Noteworthy changes in release 0.1.1 (unreleased)
   Install Xen's packaged default xl.conf through NixOS to satisfy the device
   daemon's configuration lookup.
 
+  Keep PipeWire sockets and the audio feature hook out of minimal templates
+  unless the optional audio role is enabled.
+
+  Reject custom template names that exceed Qubes' length limit or use a
+  reserved name/suffix before building their images.
+
+  Isolate RPM signing configuration from host/user RPM macros. The signing
+  helper keeps the explicitly selected project keyring.
+
 * Administration and upgrades
 
   Headless updates use the existing qubes-nixos-update systemd service through

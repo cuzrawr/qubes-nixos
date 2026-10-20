@@ -1,6 +1,6 @@
 # GitHub Free
 
-Checked against GitHub documentation on 2026-10-15. Public repository.
+Checked against GitHub documentation on 2026-10-20. Public repository.
 Confidence: high for the linked limits on that date; runtime acceptance stays
 in the [test record](testing.md).
 
@@ -14,8 +14,9 @@ Triggers: pushes to `main`, pull requests and manual runs.
 | Nix formatting | Yes |
 | Evaluation of stable/unstable XFCE, minimal and diagnostic outputs | Yes |
 | Existing path-adaptation tests | Yes |
+| Custom template name validation | Qubes name limits and reserved names |
 | XFCE/minimal audio defaults and optional activation | Configuration checks on both pins |
-| Signing helper build and its shell checks | Yes |
+| Signing helper | Build/shell checks, isolated test-key signing and failure cases |
 | ASCII Markdown | Yes |
 | Complete images/RPMs | Local builder |
 | Qubes boot, GUI, devices, updates and rollback | Qubes runtime environment |
