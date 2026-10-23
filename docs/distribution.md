@@ -154,7 +154,7 @@ KEEP IN MIND:
 - Post-install resets the template's NetVM to its default.
 - An in-template NixOS rebuild does not replace these volumes.
 
-Follow the [backup and upgrade procedure](recovery.md#010-to-011), then check
+Follow the [backup and image replacement procedure](updates.md#replace-with-a-newer-signed-image), then check
 the template's settings.
 Source: [Qubes post-install implementation][postinstall].
 

@@ -66,7 +66,7 @@ Back up before upgrading!
 Read:
 
 [Release changes](versions.txt) |
-[ updating & recovery](docs/recovery.md#010-to-011).
+[Updating](docs/updates.md) | [Recovery](docs/recovery.md).
 
 
 
@@ -176,8 +176,8 @@ qvm-template remove nixos-26.05-xfce
 
 ### Recover or start again
 
-- Broken configuration, template still boots: rollback in section 3 [Restore a generation](docs/recovery.md).
-- Reinstall the template from an RPM: `qvm-template --keyring ./template-key.asc reinstall ./TEMPLATE.rpm`.
+- Broken configuration, template still boots: [restore a generation](docs/recovery.md#restore-a-generation).
+- Reinstall the template from an RPM: [last-resort recovery](docs/recovery.md#reinstall-as-a-last-resort).
 - Full delete/build/install cycle: [recovery commands](docs/recovery.md).
 - Reinstallation resets template root and private data; follow the backup steps
   in the recovery guide first.
@@ -275,60 +275,26 @@ Split GPG 2, UpdateVM, update proxy, boot, persistence, trust and disk use.
 
 ## 3. Update and maintain
 
-Inside the TemplateVM, open a root shell (`sudo -i` on XFCE, or the dom0 command
-above on minimal), then `cd /etc/nixos`:
-
-| Template | Refresh packages | Build and apply |
-| --- | --- | --- |
-| Stable XFCE | `nix flake update nixpkgs` | `nixos-rebuild switch --flake .#nixos` |
-| Unstable XFCE | `nix flake update nixpkgs-unstable` | `nixos-rebuild switch --flake .#nixos-unstable` |
-| Stable minimal | `nix flake update nixpkgs` | `nixos-rebuild switch --flake .#nixos-minimal` |
-| Unstable minimal | `nix flake update nixpkgs-unstable` | `nixos-rebuild switch --flake .#nixos-unstable-minimal` |
-
-Then `poweroff` and restart dependent AppVMs.
-
-Keep TemplateVMs without a NetVM;
-Nix uses the native UpdatesProxy.
-
-Headless update for any profile, from dom0:
+For normal software updates, keep the existing template and run in **dom0**:
 
 ```sh
-qvm-run -p --no-gui -u root TEMPLATE 'systemctl start qubes-nixos-update.service'
-qvm-run -p --no-gui -u root TEMPLATE 'journalctl -u qubes-nixos-update.service -n 40 --no-pager'
+qvm-run -p --no-gui -u root nixos-26.05-xfce 'systemctl start qubes-nixos-update.service'
+qvm-run -p --no-gui -u root nixos-26.05-xfce 'journalctl -b -u qubes-nixos-update.service -n 60 --no-pager'
 ```
 
-The first command waits and returns a failure status if the update fails.
-The systemd job owns the update;
+The start command must succeed; check the latest attempt for `Update applied`.
+Save work, shut down the template, then restart its
+AppVMs. If the command fails, use the recovery guide before continuing.
 
-Graphical update for XFCE, from dom0:
+This keeps your configuration and user files. It updates NixOS packages;
+project integration updates are separate. The central Qubes updater has no
+NixOS backend. Template Manager's Upgrade replaces the image and clears the
+TemplateVM's own data.
 
-```sh
-qvm-run --service nixos-26.05-xfce qubes.InstallUpdatesGUI
-# Or: qvm-run --service nixos-unstable-xfce qubes.InstallUpdatesGUI
-```
-
-KEEP IN MIND:
-
-- Closing the window leaves the update running.
-- Wait for "Update applied" before shutting down the template.
-- Progress: `sudo journalctl -fu qubes-nixos-update` in the template.
-- Central Qubes updater: no NixOS backend; use these commands/RPC.
-- Failed evaluation/build: running generation stays available.
-- Failed activation: inspect system/user units and roll back; activation is not
-  a transaction across all running services.
-
-if bad happened:
-```sh
-sudo nixos-rebuild switch --rollback --no-reexec
-```
-This will Rollback changes the generation, not edited source files.
-the update RPC keeps `/var/lib/qubes/flake.lock.previous`.
-Shut down the template and restart its AppVMs afterward.
-Details in recovery.md
-
-_
-
-
+- [Updating](docs/updates.md): routine updates first, backups, integration
+  upgrades, image replacement, and what each method can erase.
+- [Recovery](docs/recovery.md): failed updates, rollback, saved configuration,
+  Qubes backup restore, reinstall and delete/install.
 
 | Maintenance | Policy/command |
 | --- | --- |
@@ -346,7 +312,7 @@ a volume's size does not add physical disk space.
 
 Run maintenance commands as root; omit `sudo` in a minimal root shell.
 Updating nixpkgs does not update this integration or pinned Qubes components.
-[Integration updates, release upgrades and recovery](docs/recovery.md).
+[Integration and release upgrades](docs/updates.md).
 Keep `system.stateVersion` unchanged during routine upgrades.
 
 ## Repository and compatibility

@@ -59,7 +59,7 @@ Package commands: [Qubes installation guide][install], [APT][apt], [DNF][dnf].
 **Updates:** use [Qubes Update][updates] for Debian/Fedora. Its NixOS backend is
 missing. The NixOS service refreshes selected flake inputs and rebuilds;
 it does not update this project's integration files.
-[Integration updates](recovery.md).
+[Routine and integration updates](updates.md).
 
 - NixOS: edit the desired package/service configuration, build, then activate.
   Keep `/etc/nixos` in version control. A rollback restores a retained system

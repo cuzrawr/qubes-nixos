@@ -155,6 +155,21 @@ including executable handlers, native TCP targets and optional policy sockets.
 Diagnostic boot assertions are in [`tests/boot.nix`](../tests/boot.nix).
 Diagnostic images enable console autologin and are not distributable templates.
 
+## Update and recovery commands
+
+Stable XFCE on Qubes 4.3:
+
+- Root and user qrexec status commands; zero failed system/user units.
+- Configuration archive creation, extraction and full source comparison.
+- Numbered lock-file backups and restoration into a staged source tree.
+- Build of the recovered source produces the running system's exact store path.
+- Published-source retrieval through the template's native update proxy.
+
+These checks do not activate a new package set or replace a template volume.
+Generation rollback and failed-update coverage are recorded above. Final release
+RPM replacement, arbitrary customized-source merges and failed-boot recovery
+remain outside these command checks.
+
 ## Startup under load
 
 Coverage: three paired v0.1.0 AppVM starts with Qubes defaults of 400 MiB initial

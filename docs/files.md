@@ -21,6 +21,7 @@ docs/github.md
 docs/recovery.md
 docs/resizing.md
 docs/testing.md
+docs/updates.md
 flake.lock
 flake.nix
 lib/image.nix

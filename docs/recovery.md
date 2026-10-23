@@ -1,344 +1,359 @@
-# Recovery and integration updates
+# Recovery
 
-- Applies to stable/unstable, XFCE/minimal and the stock external-kernel boot path.
-- Rebuild and maintenance commands require root; status checks do not.
-- Minimal: run `qvm-run -u root TEMPLATE xterm` in dom0. Omit `sudo` in that terminal.
-
-## 0.1.0 to 0.1.1
-
-**Not released. Final RPM upgrade acceptance: UNVERIFIED.**
-
-Use these steps after publication.
-[Test coverage](testing.md) | [Release changes](../versions.txt).
-
-### Choose the upgrade method
-
-| Method | What happens |
+| Profile | Template name |
 | --- | --- |
-| Template Manager or signed RPM | Replaces root and clears the TemplateVM's own private volume |
-| [Update integration source](#keep-a-customized-source-configuration) | Keeps reviewed local configuration; builds and activates a new NixOS generation |
-| Ordinary `nix flake update` | Updates package pins only; does not install this integration upgrade |
+| Stable XFCE | `nixos-26.05-xfce` |
+| Unstable XFCE | `nixos-unstable-xfce` |
+| Stable minimal | `nixos-26.05-minimal` |
+| Unstable minimal | `nixos-unstable-minimal` |
 
-**Back up the template and AppVMs first.**
+Command examples use **stable XFCE only**. Use the matching template and flake
+configuration from the [profile table](../README.md#versions) for another profile.
+Minimal administration uses a root terminal opened from dom0; omit `sudo` there.
 
-RPM upgrade/reinstall removes:
+Routine updates: [updates](updates.md).
+To open a normal template terminal, run in **dom0**:
 
-- Template root: custom `/etc/nixos`, software and generations.
-- Template private data: home files, `/usr/local` and other private contents.
+```sh
+qvm-run nixos-26.05-xfce xfce4-terminal
+```
+Before replacing files or a template: [save configuration and verify a backup](updates.md#before-changing-a-template).
 
-Existing AppVM private volumes remain separate. This is native Qubes 4.3
-[replacement behavior][postprocess], confirmed in the installed tool's source.
-Confidence: high. [Qubes persistence][persistence].
+**0.1.1 is not released. Final RPM replacement acceptance: UNVERIFIED.**
+[Recorded test coverage](testing.md). Confidence: high for the recorded tests;
+other recovery cases require verification.
 
-XFCE template names stay the same. Minimal templates are separate choices;
-an XFCE upgrade does not select minimal. Expected replacement RPM: `4.3.0-2`.
+## Choose the recovery path
 
-### 1. Identify the template and its qubes
-
-In Qubes Manager:
-
-1. Sort by the Template column.
-2. Note every qube using the template, including disposable templates.
-3. Record custom template settings, especially networking.
-
-| Installed template | Matching 0.1.1 replacement |
+| Symptom | Start here |
 | --- | --- |
-| `nixos-26.05-xfce` | `nixos-26.05-xfce` |
-| `nixos-unstable-xfce` | `nixos-unstable-xfce` |
+| Download, evaluation or build failed before activation | [Failed package update](#failed-package-update) |
+| Activation failed, or updated software/services are broken | [Restore a generation](#restore-a-generation) |
+| Rollback works, but the next rebuild repeats the failure | [Restore the lock file or source](#restore-the-lock-file-or-source) |
+| Template does not start, or root qrexec is unavailable | [Template will not boot](#template-will-not-boot) |
+| Needed files disappeared after RPM replacement | [Restore a Qubes backup](#restore-a-qubes-backup) |
+| No usable generation or backup; replace the template | [Reinstall as a last resort](#reinstall-as-a-last-resort) |
 
-- `TEMPLATE`: the exact installed template name.
-- `APP`: one of its AppVMs.
-- Upgrade one template at a time.
+**Save work before stopping qubes.** Stopping discards unsaved work and disposable
+contents. Keep dependent AppVMs stopped while repairing their template. Do not delete
+AppVMs, run garbage collection or remove generations during recovery.
+Stop if a repair/build command fails; save its output before trying another
+procedure. Diagnostic `systemctl status` returns a nonzero status for a failed
+or inactive service; use its output to identify the problem.
 
-**Settings:** native post-install processing resets the template's NetVM to its
-default.
+## Failed package update
 
-**Service qubes:** arrange another network/input provider before shutting them
-down. Keep the backup destination and UpdateVM usable.
-
-### 2. Save custom configuration and back up
-
-If you customized `/etc/nixos`, run in the TemplateVM:
-
-```sh
-umask 077
-archive="$HOME/nixos-before-0.1.1-$(date +%Y%m%d-%H%M%S).tar.gz"
-sudo tar -C /etc -czf - nixos > "$archive"
-tar -tzf "$archive"
-qvm-copy "$archive"
-```
-
-- Choose a separate qube in the copy dialog.
-- Check that the archive arrived and lists your files.
-- Also save imported files outside `/etc/nixos` and needed template home or
-  `/usr/local` files.
-
-**The archive must leave the TemplateVM.** RPM replacement clears its home.
-
-Then make a full Qubes backup:
-
-1. Save work and shut down the template's AppVMs, disposables and TemplateVM.
-2. Open **Backup Qubes** from the application menu. Move the TemplateVM and all
-   its persistent dependent qubes into **Selected**. Do not assume they are
-   selected automatically.
-3. Choose a destination outside these qubes, preferably an external backup
-   device. Keep the passphrase separately. Check the summary includes every
-   intended qube, then complete the backup.
-4. Open **Restore Backup**, select that archive and its passphrase, and choose
-   the option to verify integrity without restoring data. Select the backed-up
-   qubes and finish verification. Stop if backup or verification reports an error.
-
-**Verification:** checks archive integrity, not whether you selected every
-needed file/qube. Keep the backup until the replacement and applications work.
-[Official backup/restore procedure][backup].
-
-### 3. Upgrade through Template Manager
-
-1. Check the Qubes storage pool has room for the download and import.
-2. Open **Qubes Template Manager** (`qvm-template-gui` in dom0).
-3. Refresh repository data. Under **Installed templates**, select the same
-   template name and choose **Upgrade**. Confirm the replacement is release `2`.
-4. Read the replacement warning, then start the upgrade. Wait for successful
-   completion; do not shut down the computer during import.
-
-**No upgrade offered:** check publication and
-[repository setup](../README.md#fast-template-launch-procedure).
-Do not delete the old template to force an upgrade.
-
-Equivalent command in dom0, after replacing `TEMPLATE`:
+Run in a **normal terminal inside `nixos-26.05-xfce`**:
 
 ```sh
-qvm-template --repoid=qubes-nixos --refresh upgrade TEMPLATE
+sudo systemctl status qubes-nixos-update --no-pager
+sudo journalctl -b -u qubes-nixos-update --no-pager
+readlink -f /run/current-system
+readlink -f /nix/var/nix/profiles/system
+df -h / /rw
 ```
 
-For a local RPM:
+- A failed download, evaluation or build does not activate the candidate.
+- The updater may already have changed `/etc/nixos/flake.lock`.
+- Notification failure can occur after a successful activation. Check the latest
+  journal entries and system paths before deciding whether rollback is needed.
+- A failed activation can leave some services/configuration changed. Do not
+  assume the old system is intact because the command returned an error.
+- Compare the system paths with your pre-update record. If activation started
+  or the paths differ unexpectedly, use [generation rollback](#restore-a-generation).
 
-1. Transfer the matching signed file and verified public key using the
-   [README procedure](../README.md#install-a-signed-rpm).
-2. Run **upgrade** in dom0:
+Fix the reported cause: configuration error, unavailable download, update-proxy
+failure or [insufficient disk space](resizing.md). Do not disable signature
+checks or delete the Nix store to make a retry succeed.
+
+To retry an unchanged lock file, use the build/switch procedure in
+[updates](updates.md). Starting the update service again refreshes package pins
+and saves another lock-file backup.
+
+## Restore a generation
+
+Use this when the TemplateVM still accepts commands and a working generation
+is retained. **This does not restore edited Nix files or application data.**
+
+Run in a **normal terminal inside `nixos-26.05-xfce`**:
 
 ```sh
-# stable; use the unstable filename for an unstable template
-rpm=qubes-template-nixos-26.05-xfce-4.3.0-2.noarch.rpm
-qvm-template --keyring ./template-key.asc upgrade "./$rpm"
+sudo nix-env -p /nix/var/nix/profiles/system --list-generations
+sudo nixos-rebuild switch --rollback --no-reexec
 ```
 
-Unstable filename: `qubes-template-nixos-unstable-xfce-4.3.0-2.noarch.rpm`.
+- The command selects the previous retained system generation.
+- `--no-reexec` avoids evaluating a broken flake to update `nixos-rebuild` first.
+- Do not repeat rollback blindly: the previous generation must be one you
+  expect to work. If it is unavailable, use a Qubes backup.
+- `/etc/nixos`, its `flake.lock`, `/home` and application databases stay as they
+  are. Older software may not understand data migrated by newer software.
+- Generations removed by garbage collection or RPM replacement cannot be
+  recovered this way. These templates have no GRUB generation menu.
 
-**Both methods replace root and clear the TemplateVM's private volume.**
-[Native template commands][template-cli].
+Repair the source separately before the next rebuild. Then use
+[check recovery](#check-recovery) below.
+[NixOS rollback reference][nixos-rollback].
 
-### 4. Check before resuming work
+## Restore the lock file or source
 
-1. Review the template's Qubes Settings against the recorded settings. Restore
-   any intentional networking selection, then open a normal user terminal in
-   the template. `systemctl --user` must check the desktop user's services:
+### Only the package pins are wrong
+
+The update service saves the previous lock file at
+`/var/lib/qubes/flake.lock.previous`. Repeated runs retain numbered older copies.
+A manually run `nix flake update` does not create this project backup.
+
+Run in a **normal terminal inside `nixos-26.05-xfce`**:
+
+```sh
+sudo ls -lt /var/lib/qubes/flake.lock.previous*
+sudo cat /var/lib/qubes/flake.lock.previous
+```
+
+Choose the backup from before the failing update. The following example uses
+`flake.lock.previous`; substitute the numbered filename if necessary.
+
+```sh
+sudo cp --backup=numbered /etc/nixos/flake.lock /etc/nixos/flake.lock.before-recovery &&
+  sudo install -m 0644 /var/lib/qubes/flake.lock.previous /etc/nixos/flake.lock &&
+  sudo nixos-rebuild build --flake /etc/nixos#nixos --no-update-lock-file
+```
+
+**Stop if the build fails.** Restoring a lock file changes future builds, not
+the running system. When the build succeeds:
+
+```sh
+sudo nixos-rebuild switch --flake /etc/nixos#nixos --no-update-lock-file
+```
+
+If local Nix files changed too, restore the matching source backup below.
+Starting the updater now would refresh the pins again.
+
+### Configuration files are wrong or missing
+
+1. Copy your saved configuration archive back from the backup qube using
+   Qubes file copy. Put it in the template's home as `nixos-config-backup.tar.gz`.
+2. Use only your own trusted archive. Extract it into an empty directory,
+   without root privileges. These commands run in a **normal terminal inside
+   `nixos-26.05-xfce`**:
+
+```sh
+mkdir -m 700 "$HOME/nixos-recovery" &&
+  tar -tf "$HOME/nixos-config-backup.tar.gz" &&
+  tar --no-same-owner --no-same-permissions -xf "$HOME/nixos-config-backup.tar.gz" -C "$HOME/nixos-recovery"
+```
+
+3. Check that `nixos-recovery/nixos/` contains your `flake.nix`, `flake.lock`,
+   configuration and imported modules. Restore separately backed-up imports
+   outside that directory to their expected locations too.
+4. Stage the recovered source and build it before replacing `/etc/nixos`:
+
+```sh
+test ! -e /etc/nixos.recovered && test ! -L /etc/nixos.recovered &&
+  sudo cp -a "$HOME/nixos-recovery/nixos" /etc/nixos.recovered &&
+  sudo chown -R root:root /etc/nixos.recovered &&
+  sudo nixos-rebuild build --flake /etc/nixos.recovered#nixos --no-update-lock-file
+```
+
+5. **Stop if staging or build fails.** If either saved directory below already
+   exists, keep it and choose another unused name before continuing.
+   Preserve the current source, then select the recovered copy:
+
+```sh
+test ! -e /etc/nixos.before-recovery && test ! -L /etc/nixos.before-recovery &&
+  sudo mv /etc/nixos /etc/nixos.before-recovery &&
+  sudo mv /etc/nixos.recovered /etc/nixos
+```
+
+6. If `/etc/nixos` was missing, skip its rename and move only
+   `/etc/nixos.recovered` to `/etc/nixos`. If the second rename fails, move
+   `/etc/nixos.before-recovery` back before continuing. Once the recovered
+   source is in place, activate it:
+
+```sh
+sudo nixos-rebuild switch --flake /etc/nixos#nixos --no-update-lock-file
+```
+
+**This restores the whole saved source, including its integration version.**
+Do not mix old `modules/` with a new `flake.nix`. Keep the saved current source
+until recovery is checked. An archive made before later package additions
+will not include those additions.
+
+## Template will not boot
+
+1. Keep dependent AppVMs stopped. Save the startup error and available qube
+   logs in Qubes Manager.
+2. Check free space in Qubes' disk-space widget. Check the template's kernel
+   and virtualization settings against the [supported configuration](configuration.md#boot-and-service-ordering).
+3. If startup failed after increasing root storage, try the
+   [resize-timeout recovery](resizing.md#startup-timeout-on-010).
+4. If only desktop startup failed, try this read-only command in **dom0**:
+
+```sh
+qvm-run -p --no-gui -u root nixos-26.05-xfce 'systemctl --failed; journalctl -b -p err --no-pager'
+```
+
+5. If root qrexec works, open an administrator terminal from **dom0**:
+
+```sh
+qvm-run -u root nixos-26.05-xfce xterm
+```
+
+Run generation rollback there without `sudo`. If qrexec works but Xorg cannot open a terminal, run the rollback in **dom0**:
+
+```sh
+qvm-run -p --no-gui -u root nixos-26.05-xfce 'nixos-rebuild switch --rollback --no-reexec'
+```
+
+If qrexec is unavailable, restore a backup below. Keep the broken template for inspection; do not format
+its volumes or attempt a generic NixOS GRUB recovery.
+
+## Restore a Qubes backup
+
+**Keep the broken template. Restore a separate copy first.**
+
+1. Open **Restore Backup** from the Qubes application menu. Choose the backup
+   location and passphrase, then verify integrity without restoring data.
+   Stop if verification fails.
+2. Ensure the backup contains `nixos-26.05-xfce`. Keep the existing template
+   with that name so native conflict renaming creates a separate copy.
+3. In **dom0**, replace `BACKUP_QUBE` and `/path/to/qubes-backup` with the qube
+   holding the archive and its path inside that qube:
+
+```sh
+qvm-backup-restore --dest-vm BACKUP_QUBE --rename-conflicting /path/to/qubes-backup nixos-26.05-xfce
+```
+
+4. Review the restore summary before confirming. Record the new template name.
+   This command selects only the TemplateVM; it does not replace AppVM data.
+5. In Qubes Manager, review the restored template's settings, start it and
+   [check its services](#check-recovery). Shut it down afterward.
+6. Select one halted AppVM, open **Settings**, and choose the restored
+   template. Start it; check files, applications and networking before moving
+   the remaining AppVMs.
+
+**Application data recovery:** restore the affected AppVM under another name
+and inspect its files separately. A TemplateVM restore does not undo changes
+to an AppVM's private volume. Copying recovered files over current files can
+overwrite newer work; keep both copies until you have compared them. Keep current AppVMs and the backup until checked.
+[Official backup procedure][backup] | [Restore command][restore-cli].
+
+## Reinstall as a last resort
+
+Use this when no retained generation or usable backup can repair the template.
+Finish the [backup steps](updates.md#before-changing-a-template), including any
+files still recoverable. Shut down the template and all dependent qubes.
+
+**Reinstall removes the TemplateVM's custom root and clears its private
+volume: `/etc/nixos`, software, generations, home files and `/usr/local`.**
+Existing AppVM private volumes are separate. A NixOS rollback cannot undo this.
+Files already erased by replacement cannot be recovered from a fresh image;
+you need a backup of those files.
+Native post-install also resets the template's NetVM to its default.
+Confidence: high; verified in [Qubes post-install source][postprocess].
+
+Run in **dom0**, with the repository already configured:
+
+```sh
+qvm-template --repoid=qubes-nixos --refresh reinstall nixos-26.05-xfce
+```
+
+`reinstall` requires the same RPM version/release as currently installed.
+If it is unavailable, stop and obtain that signed RPM; do not force an upgrade
+as a recovery shortcut.
+
+For a local signed RPM, use the [transfer and signature procedure](../README.md#install-a-signed-rpm)
+first. In **dom0**, this example reinstalls the published stable XFCE RPM:
+
+```sh
+qvm-template --keyring ./template-key.asc reinstall ./qubes-template-nixos-26.05-xfce-4.3.0-1.noarch.rpm
+```
+
+**The local command has the same data loss as repository reinstall.**
+Review settings, check boot, and restore needed files from backup. Reapply
+reviewed custom packages/options; do not blindly copy old integration modules
+over the replacement. [Native template commands][template-cli].
+
+### Complete delete/install cycle
+
+**Deleting the template removes all its root and private data.** Do not do this
+if a backup restore or reinstall is sufficient. Keep AppVMs; do not use `purge`.
+
+1. Verify a full backup and save recoverable configuration outside the template.
+2. Obtain and verify the intended signed RPM before deleting anything.
+3. In Qubes Manager, sort by **Template**. Shut down every dependent qube,
+   including disposable templates. Arrange alternate service qubes first if
+   these provide networking or input.
+4. In each halted dependent qube's **Settings**, temporarily select another
+   installed template. Keep these qubes stopped. Record defaults referring to
+   the old template and change them temporarily in Qubes Global Settings.
+5. Shut down `nixos-26.05-xfce`. In **dom0**:
+
+```sh
+qvm-template remove nixos-26.05-xfce
+```
+
+6. If removal is refused, review the remaining dependencies; do not force it.
+   **The removed TemplateVM's files and generations are now gone.** Install
+   the verified signed replacement in **dom0**:
+
+```sh
+qvm-template --keyring ./template-key.asc install ./qubes-template-nixos-26.05-xfce-4.3.0-1.noarch.rpm
+```
+
+7. Review the new template's settings. Start it, check recovery below, and shut
+   it down. Restore needed template files from the external backup.
+8. Return each halted dependent qube and recorded default to the NixOS template.
+   Start one AppVM and check it before starting the others.
+
+### Rebuild a published image
+
+If the signed download is unavailable, use an **x86_64 Linux builder with Nix
+and Git**, outside dom0:
+
+```sh
+git clone https://github.com/cuzrawr/qubes-nixos qubes-nixos-recovery &&
+  cd qubes-nixos-recovery &&
+  git switch --detach v0.1.0 &&
+  nix build .#template-rpm -o result-stable
+```
+
+- This tag builds the published stable XFCE profile; it does not contain minimal.
+- Keep `flake.lock`; do not update inputs during recovery.
+- [Sign the local RPM](distribution.md#sign-a-local-build), then transfer it
+  using the README procedure. Building an RPM does not restore custom files.
+
+## Check recovery
+
+Run in a **normal user terminal inside the repaired template**, not a root
+terminal:
 
 ```sh
 systemctl --failed
 systemctl --user --failed
-df -h /
+df -h / /rw
 ```
 
-2. Both unit lists must report zero failed units. Check root has free space.
-   A completed import or release `2` in Template Manager alone is not a boot test.
-3. Reapply reviewed local packages/options from the saved configuration and
-   rebuild using the matching [README command](../README.md#2-use-and-change-software).
-   Check failed units again. Do not overwrite the new `modules/` with the old copy.
-   Restore any needed template home or `/usr/local` files from the external copy.
-4. Shut down the TemplateVM. Start one AppVM. Check important files, application
-   settings, required software and network access before starting the others.
-5. Keep the backup until all dependent qubes have been checked.
+- Both unit lists should be empty. Inspect any failure; do not reset every
+  failed unit merely to clear the display.
+- Zero failed units does not mean the journal contains no warnings/errors.
+- Shut down the TemplateVM. Start one dependent AppVM; check important files,
+  applications and networking before starting the others.
+- Keep the previous template, source copies and backup until these checks pass.
 
-### If something fails
-
-- Stop. Keep the other dependent qubes shut down and retain the error output.
-- Failed download/signature check: fix that error before retrying; do not disable
-  signature checking.
-- Failed NixOS rebuild: use [generation rollback](#restore-a-generation).
-- Broken template after RPM replacement: restore the old TemplateVM from the
-  Qubes backup under a different name. Review the restore summary before
-  confirming. Keep the replacement until the restored template boots.
-- While an AppVM is halted, select the restored template in its Qubes Settings.
-  Test that AppVM before switching the others. Do not delete or recreate AppVMs.
-
-If a name conflict blocks restore, use the native CLI in dom0:
-
-- `BACKUP_QUBE`: qube holding the backup.
-- `/path/to/BACKUP`: archive path inside that qube.
-- `TEMPLATE`: original template name.
+If only `qubes-nixos-update` remains failed from the original attempt, save its
+journal. After restoring and checking both system and source, clear that one
+job's failed state in the template terminal:
 
 ```sh
-qvm-backup-restore --dest-vm BACKUP_QUBE --rename-conflicting /path/to/BACKUP TEMPLATE
+sudo systemctl reset-failed qubes-nixos-update
+systemctl --failed
 ```
 
-- Read the restore summary for the new template name.
-- This restores only the selected TemplateVM.
-- Restore AppVM data separately only if needed. Use another name to inspect
-  recovered files before replacing current data.
-
-[Restore options][restore-cli].
-
-**NixOS rollback cannot recover generations removed by RPM replacement.**
-
-For a 0.1.0 template stuck after disk growth, try
-[resize recovery](resizing.md#startup-timeout-on-010) before replacement.
-
-### Keep a customized source configuration
-
-Use [integration source updates](#update-the-integration-source) to retain local
-configuration.
-
-Coverage: both XFCE pins, with a custom package and scalar setting.
-Confidence: high for those tests; other custom configurations need testing.
-
-- Review `flake.nix`, `profiles/base.nix`, `modules/` and the profile selection
-  together. Keep local packages, imported modules, update target/input and
-  `system.stateVersion`.
-- Existing custom settings can stay in `configuration.nix`; shared scalar
-  defaults use `mkDefault` so ordinary local values can override them.
-- Keep `boot.kernel.enable` and `boot.initrd.enable` false. Preserve the
-  [resize unit ordering](configuration.md#boot-and-service-ordering).
-- Build with `nixos-rebuild build --flake /etc/nixos#CONFIGURATION` before
-  `switch`. Check failed units and reboot the template before testing an AppVM.
+This does not retry the update or remove its journal.
 
 [backup]: https://doc.qubes-os.org/en/r4.3/user/how-to-guides/how-to-back-up-restore-and-migrate.html
-[persistence]: https://doc.qubes-os.org/en/r4.3/user/templates/templates.html#inheritance-and-persistence
-[template-cli]: https://doc.qubes-os.org/projects/core-admin-client/en/latest/manpages/qvm-template.html
 [restore-cli]: https://doc.qubes-os.org/projects/core-admin-client/en/latest/manpages/qvm-backup-restore.html
+[template-cli]: https://doc.qubes-os.org/projects/core-admin-client/en/latest/manpages/qvm-template.html
 [postprocess]: https://github.com/QubesOS/qubes-core-admin-client/blob/release4.3/qubesadmin/tools/qvm_template_postprocess.py
-
-## Restore a generation
-
-Inside a bootable TemplateVM:
-
-```sh
-sudo nixos-rebuild switch --rollback --no-reexec
-sudo poweroff
-```
-
-- Restart dependent AppVMs.
-- Restore edited Nix files separately.
-- Use Qubes backup restore for application data. Nix rollback does not restore
-  home directories.
-
-## Rebuild from GitHub
-
-On an x86_64 Linux builder with Nix and Git:
-
-```sh
-git clone https://github.com/cuzrawr/qubes-nixos qubes-nixos-recovery
-cd qubes-nixos-recovery
-git switch --detach v0.1.0
-
-# Stable
-nix build .#template-rpm -o result-stable
-
-# Unstable, if required
-nix build .#template-rpm-unstable -o result-unstable
-```
-
-- Select the tag or source commit from the matching [test record](testing.md).
-- The example tag contains XFCE only. For minimal, use its published tag and
-  the build-output table in the README.
-- Keep `flake.lock`. Do not update inputs while reproducing that version.
-- [Sign the RPM](distribution.md#sign-a-local-build), then transfer it and the
-  public key to dom0 using the README commands.
-
-## Replace root without deleting AppVMs
-
-1. Back up the TemplateVM and dependent AppVMs with Qubes Backup.
-2. Copy custom `/etc/nixos` and needed template home or `/usr/local` files to
-   another qube, as in the [backup steps](#2-save-custom-configuration-and-back-up).
-3. Shut down the template and all its dependent qubes.
-4. In dom0, reinstall from the configured repository:
-
-```sh
-qvm-template --repoid=qubes-nixos --refresh reinstall nixos-26.05-xfce
-# Or: qvm-template --repoid=qubes-nixos --refresh reinstall nixos-unstable-xfce
-```
-
-Alternatively, use the matching downloaded or locally built signed RPM:
-
-```sh
-qvm-template --keyring ./template-key.asc reinstall ./TEMPLATE.rpm
-```
-
-5. Start the template; check guest services; shut it down.
-6. Restart one AppVM and check it before restarting the others.
-
-**Reinstallation replaces root and clears the template's private volume,**
-including home and `/usr/local`. Existing AppVM private data stays separate.
-
-Check the template boots before reapplying reviewed settings and restoring its
-needed files.
-
-## Install a newer template RPM
-
-Follow the same backup and shutdown steps above. When a newer RPM is published,
-select it in Qubes Template Manager, or run in dom0:
-
-```sh
-qvm-template --repoid=qubes-nixos --refresh upgrade nixos-26.05-xfce
-# Or: qvm-template --repoid=qubes-nixos --refresh upgrade nixos-unstable-xfce
-```
-
-- Replaces template root and clears its private volume.
-- Existing AppVM private data stays separate.
-- To retain your configuration, use the README's in-template NixOS update
-  procedure instead.
-- A smaller replacement image does not remove retained Qubes volume revisions.
-
-Source: [native template commands](https://doc.qubes-os.org/projects/core-admin-client/en/latest/manpages/qvm-template.html).
-
-## Complete delete/install cycle
-
-Use this when `reinstall` is unsuitable.
-
-**Complete the [backup steps](#2-save-custom-configuration-and-back-up) first.**
-Keep AppVMs halted while temporarily assigning them to another template.
-
-```sh
-# dom0: choose the installed template name from the README table
-template=nixos-26.05-xfce
-qvm-shutdown --wait MY_APP
-qvm-shutdown --wait "$template"
-qvm-prefs MY_APP template EXISTING_FALLBACK_TEMPLATE
-# Repeat the reassignment for every dependent AppVM/disposable template.
-qvm-template remove "$template"
-qvm-template --keyring ./template-key.asc install ./TEMPLATE.rpm
-qvm-prefs MY_APP template "$template"
-qvm-start MY_APP
-```
-
-- Keep AppVMs halted until reassigned to the restored NixOS template.
-- Repeat for all dependencies, including disposable templates and global
-  defaults that referred to the removed template.
-- Use `remove`, not `purge`, to preserve dependent data.
-- Removing and installing anew also resets the TemplateVM's private data;
-  restore required data from backup.
-- A native Qubes backup can restore the old TemplateVM directly instead of
-  rebuilding. Use Backup Restore or `qvm-backup-restore` in dom0.
-
-## Update the integration source
-
-`nix flake update` refreshes the flake inputs. It does not update this repository's
-modules, Qubes component pins or packaging.
-
-1. Back up `/etc/nixos` and record the current generation.
-2. Obtain the intended GitHub source commit on a builder or in a temporary clone.
-3. Review/merge integration changes into `/etc/nixos`; retain your software list,
-   local modules, update target and original `system.stateVersion`.
-4. Review `flake.lock` and `pkgs/sources.nix` together with the release notes.
-5. Run `nix flake check`, then the matching `nixos-rebuild switch --flake` command.
-6. Check system and user units; shut down the template; test one restarted AppVM.
-
-- Already managed in Git: merge the selected upstream commit normally.
-- Shipped `/etc/nixos`: no `.git` directory, so `git pull` does not work there.
-- Do not overwrite local changes with a new default `configuration.nix`.
-
-For a major NixOS release:
-
-1. Build a separately named template.
-2. Test it before reassigning AppVMs.
-3. Keep the old template until the replacement and backups work.
+[nixos-rollback]: https://nixos.org/manual/nixos/stable/#sec-rollback

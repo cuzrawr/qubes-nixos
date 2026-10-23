@@ -44,8 +44,11 @@ Noteworthy changes in release 0.1.1 (unreleased)
   can retain local configuration. Minimal uses separate template names; an
   XFCE upgrade does not select minimal.
 
-  See docs/recovery.md for upgrade and rollback procedures, docs/resizing.md
-  for disk growth, and docs/testing.md for exact coverage and unverified cases.
+  Update and recovery guides are separate. docs/updates.md starts with routine
+  in-place updates and identifies data loss for each replacement method.
+  docs/recovery.md covers rollback, configuration and backup restore, and
+  last-resort reinstall. docs/resizing.md covers disk growth; docs/testing.md
+  records coverage and unverified cases.
   Final release artifact acceptance is required before publication.
 
 
