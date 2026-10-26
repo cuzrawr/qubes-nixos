@@ -8,7 +8,6 @@
   util-macros,
   python3,
   bash,
-  tzdata,
   writeText,
   dbus,
   pam,
@@ -50,7 +49,7 @@ let
   };
   paths = writeText "qubes-gui-paths.json" (
     builtins.toJSON (
-      import ./guest-paths.nix { inherit bash tzdata; }
+      import ./guest-paths.nix { inherit bash; }
       // dependencies
       // {
         "/usr/lib/qubes/init/functions" = "${core-agent}/lib/qubes/init/functions";

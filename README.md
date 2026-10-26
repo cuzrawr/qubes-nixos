@@ -39,14 +39,15 @@ sudo install -Dm644 qubes-nixos.repo /etc/qubes/repo-templates/qubes-nixos.repo
 qvm-template-gui
 ```
 
-3. Refresh repository data. Select `nixos-26.05-xfce` or
-   `nixos-unstable-xfce`, then Install.
+3. Refresh repository data. Select `nixos-26.05-xfce`,
+   `nixos-unstable-xfce`, `nixos-26.05-minimal` or `nixos-unstable-minimal`,
+   then Install.
    Wait until it appears under Installed templates.
    Downloading and importing can take several minutes.
 
 4. Create an AppVM in Qubes Manager, choose the installed template.
 
-5. Firefox under nixos or other apps available now  from qube's application menu.
+5. Open applications from the qube's menu. XFCE includes Firefox; minimal starts with xterm.
 
 Later installations use the GUI directly.
 
@@ -55,9 +56,6 @@ Later installations use the GUI directly.
 ## Versions
 
 Signed binaries: [GitHub Releases](https://github.com/cuzrawr/qubes-nixos/releases).
-
-The repository currently provides the two XFCE templates.
-Minimal profiles are available from source; their signed release is still pending.
 
 Template Manager upgrades replace template root and clear its private volume,
 including `/etc/nixos`, `/home` and `/usr/local`
@@ -134,10 +132,12 @@ Verify the public key's fingerprint through a trusted channel.
 In dom0, set the matching RPM name:
 
 ```sh
-# Stable
-rpm=qubes-template-nixos-26.05-xfce-4.3.0-1.noarch.rpm
-# Or unstable
-# rpm=qubes-template-nixos-unstable-xfce-4.3.0-1.noarch.rpm
+# Stable XFCE
+rpm=qubes-template-nixos-26.05-xfce-4.3.0-2.noarch.rpm
+# Or choose another profile:
+# rpm=qubes-template-nixos-unstable-xfce-4.3.0-2.noarch.rpm
+# rpm=qubes-template-nixos-26.05-minimal-4.3.0-2.noarch.rpm
+# rpm=qubes-template-nixos-unstable-minimal-4.3.0-2.noarch.rpm
 
 qvm-run --pass-io TRANSFER_QUBE 'cat /path/to/template-key.asc' > template-key.asc
 qvm-run --pass-io TRANSFER_QUBE "cat /path/to/$rpm" > "$rpm"

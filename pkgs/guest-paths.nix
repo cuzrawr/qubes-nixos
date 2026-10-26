@@ -1,4 +1,4 @@
-{ bash, tzdata }:
+{ bash }:
 {
   # NixOS builds this shared profile from declared guest runtime dependencies.
   "/usr/lib/qubes/qfile-unpacker" = "/run/wrappers/bin/qfile-unpacker";
@@ -9,8 +9,9 @@
   "/usr/share/applications" = "/run/current-system/sw/share/applications";
   "/usr/share/icons" = "/run/current-system/sw/share/icons";
   "/usr/share/pixmaps" = "/run/current-system/sw/share/pixmaps";
-  "../usr/share/zoneinfo" = "${tzdata}/share/zoneinfo";
-  "/usr/share/zoneinfo" = "${tzdata}/share/zoneinfo";
+  # timedated recognizes the timezone through NixOS's native catalog path.
+  "../usr/share/zoneinfo" = "/etc/zoneinfo";
+  "/usr/share/zoneinfo" = "/etc/zoneinfo";
   "/bin/bash" = "${bash}/bin/bash";
   "/bin/sh" = "${bash}/bin/sh";
 }

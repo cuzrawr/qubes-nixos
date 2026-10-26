@@ -4,7 +4,6 @@
   python3,
   makeWrapper,
   bash,
-  tzdata,
   writeText,
   coreutils,
   gnugrep,
@@ -16,7 +15,7 @@ let
   python = python3.withPackages (ps: [ ps.pyinotify ]);
   paths = writeText "qubes-input-paths.json" (
     builtins.toJSON (
-      import ./guest-paths.nix { inherit bash tzdata; }
+      import ./guest-paths.nix { inherit bash; }
       // {
         "/usr/bin/qrexec-client-vm" = "${qrexec}/bin/qrexec-client-vm";
         "/bin/systemctl" = "${systemd}/bin/systemctl";

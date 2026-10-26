@@ -78,6 +78,7 @@ Edit the Nix modules, then rebuild.
 | `qubes-nixos-rootfs-resize` | Same upstream helper, normal service dependencies, after `network.target`, before qrexec |
 | `qubes-qrexec-agent.stopIfChanged = false` | Keeps qrexec available while dependent services restart during a rebuild |
 | `qubes-nixos-update` restart/stop settings | Prevents an update from stopping its own systemd job during activation |
+| `fonts.fontDir.decompressFonts = true` | Provides regular core font files. Disabling it makes the default Xterm Unicode font fail to load on the pinned X servers |
 | `fonts.fontDir.enable = true` | Supplies indexed fonts to Qubes' Xorg config. `UseDefaultFontPath = false` avoids appending nonexistent compiled-in directories; native `fontPath`, `filesSection` and `serverFlagsSection` remain configurable |
 
 Resize order:

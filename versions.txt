@@ -1,4 +1,4 @@
-Noteworthy changes in release 0.1.1 (unreleased)
+Noteworthy changes in release 0.1.1
 
 * New templates
 
@@ -11,6 +11,10 @@ Noteworthy changes in release 0.1.1 (unreleased)
   compatibility defaults are in profiles/base.nix.
 
 * Bug fixes
+
+  Use NixOS's timezone catalog for the Qubes-provided timezone so timedated
+  recognizes /etc/localtime. Materialize core X11 fonts through the native
+  font-directory option so Xterm can load its default Unicode font.
 
   Run Qubes' unchanged root-resize helper after local network setup and before
   qrexec. This avoids the reproduced early-boot udev/network dependency cycle
@@ -49,7 +53,6 @@ Noteworthy changes in release 0.1.1 (unreleased)
   docs/recovery.md covers rollback, configuration and backup restore, and
   last-resort reinstall. docs/resizing.md covers disk growth; docs/testing.md
   records coverage and unverified cases.
-  Final release artifact acceptance is required before publication.
 
 
 Noteworthy changes in release 0.1.0

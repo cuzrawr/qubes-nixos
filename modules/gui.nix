@@ -36,6 +36,8 @@ in
     # Qubes supplies the main Xorg config. export NixOS's font directory to
     # its Files section instead of relying on Xorg's compiled-in FHS paths.
     fonts.fontDir.enable = lib.mkDefault true;
+    # materialize core fonts so Xorg can load them without following symlinks.
+    fonts.fontDir.decompressFonts = lib.mkDefault true;
     services.xserver.serverFlagsSection = lib.mkIf config.fonts.fontDir.enable (
       lib.mkDefault ''Option "UseDefaultFontPath" "false"''
     );

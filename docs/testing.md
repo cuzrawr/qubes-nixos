@@ -24,7 +24,8 @@ Missing features and wider test gaps: [feature gaps](feature-gaps.md).
 | 0.1.1 candidate source `faa8433` | Four profile evaluations and system builds; source/runtime checks below |
 | Source `d9263d0` | Four system builds; audio defaults/optional-role evaluation on both pins; stable minimal audio enable, transport, disable and reboot |
 | 0.1.1 minimal candidate RPMs | Both signed and installed with native `qvm-template`; these are not the final release artifacts |
-| 0.1.1 final RPMs and repository | UNVERIFIED: four-profile fresh installation, packaged 0.1.0 upgrade and published repository acceptance |
+| Candidate build `ce6fb25` | Both XFCE signed-RPM upgrades; both minimal fresh installs; customized source migration and renamed backup restore on both XFCE pins; bounded stable memory-growth check |
+| Release artifact coverage | UNVERIFIED: installation and transport checks for the timezone/font-corrected RPMs; published repository acceptance |
 
 Source checks cover Nix formatting, flake evaluation, path adaptation, template
 name validation, signing isolation/failure cases and ASCII Markdown. The
@@ -155,6 +156,51 @@ including executable handlers, native TCP targets and optional policy sockets.
 Diagnostic boot assertions are in [`tests/boot.nix`](../tests/boot.nix).
 Diagnostic images enable console autologin and are not distributable templates.
 
+## Signed image upgrade and recovery
+
+Qubes 4.3; source/build commit `ce6fb25`:
+
+| Operation | Verified coverage |
+| --- | --- |
+| Stable/unstable XFCE signed-RPM upgrade | Native replacement of the released image; expected system and source; template root/private reset; dependent AppVM private checksums retained across two boots; zero failed system/user units |
+| Stable/unstable minimal signed-RPM install | Native fresh import; exact system/source; two TemplateVM and AppVM boots; root qrexec, Xorg, locked root password, denied user sudo/su and no audio; zero failed system/user units; AppVM root resets while home and `/usr/local` persist; template proxy HTTPS and AppVM DNS/direct HTTPS |
+| Customized stable/unstable source migration | Complete frozen source tree; custom package, scalar option, configuration and data markers retained; unchanged stateVersion; retained generations, reboot and update-proxy HTTPS; zero failed system/user units |
+| Stable/unstable backup restore | Separate conflict-renamed TemplateVMs; exact backed-up root/private volumes and system restored; original templates unchanged |
+
+These checks do not establish arbitrary custom-module compatibility or restore
+AppVM application data. Visible application interaction and complete transport
+regressions are separate checks.
+
+## Application interaction
+
+All four signed images from `ce6fb25`, using dependent AppVMs:
+
+| Check | Verified coverage |
+| --- | --- |
+| Stopped AppVM | `qvm-run --no-autostart` fails and leaves it stopped; ordinary GUI and headless `qvm-run` start it |
+| Concurrent windows | Three visible Xterms while six commands run in seeded order |
+| Command handling | User identity, literal quoting, exit status 37, missing-command status 127, running generation and private marker reads |
+| Privileges | User sudo allowed in XFCE, denied in minimal; administrator qrexec works in both |
+| Restart | Private marker retained; expected system and VM properties unchanged; zero failed system/user units |
+| XFCE Firefox | Visible local-file page with the expected title; normal window close on both pins |
+
+These are bounded deterministic checks (seed 411), not exhaustive fuzzing.
+They do not cover every application dialog or command/shutdown race. Visible
+windows and zero failed units do not establish warning-free application logs.
+
+## Timezone and Xterm fonts
+
+Both pins, XFCE and minimal; all four TemplateVMs and their AppVMs:
+
+- Cold `qvm-run` opens a visible default Xterm without a font-load warning.
+- Xlib loads the exact default Unicode font and the `fixed` fallback.
+- `timedatectl` matches Qubes' timezone; `/etc/localtime` uses `/etc/zoneinfo`.
+- Expected system generation; zero failed system/user units.
+- VM identity, settings and halted state retained after each check.
+
+These checks use the built system configurations. Final RPM installation is
+listed separately above.
+
 ## Update and recovery commands
 
 Stable XFCE on Qubes 4.3:
@@ -166,9 +212,9 @@ Stable XFCE on Qubes 4.3:
 - Published-source retrieval through the template's native update proxy.
 
 These checks do not activate a new package set or replace a template volume.
-Generation rollback and failed-update coverage are recorded above. Final release
-RPM replacement, arbitrary customized-source merges and failed-boot recovery
-remain outside these command checks.
+Generation rollback and failed-update coverage are recorded above. Native image
+replacement and restored-system checks are listed separately. Arbitrary
+customized-source merges and failed-boot recovery remain UNVERIFIED.
 
 ## Startup under load
 
@@ -208,12 +254,23 @@ message alone does not establish that all consequences are harmless.
 | Obsolete `StandardOutput=syslog` | Also present in Fedora/Debian; systemd maps it to journal output |
 | Unstable I/O-pressure threshold | systemd 261.2 rejects an inherited-setting override with `EBUSY`; actual user manager and API reproducer retain registered watches |
 | Memory-hotplug write | Kernel trace: Xen auto-online succeeds, then udev receives already-online; 768 MiB allocation succeeds, all blocks online, zero failed units. Stock Fedora also reproduces the warning |
+| vmemmap order-9 allocation warning | Reproduced on the stable signed image; usable memory subsequently grows, all sampled blocks are online, allocation checks pass and no OOM occurs |
 | Xorg missing acpid socket | Present on NixOS; physical suspend/resume remains UNVERIFIED |
 | External-initramfs handoff | Early API-filesystem warnings remain visible |
 
 The pressure-watch check verifies registration, not event latency or storage
 performance. The hotplug result covers the traced duplicate-online case; an
 offline block, OOM or failed allocation requires separate investigation.
+
+The stable signed-image memory check reproduces one order-9 warning, then
+observes MemTotal grow from 718940 to 2322484 KiB. A 768 MiB mapping passes
+page-write and sampled-read checks; all sampled memory blocks are online, with
+no OOM or failed system/user units. About 53 MiB of process swap is observed;
+the full mapping is not continuously resident. Settings stay unchanged.
+A supported base-page fallback is a high-confidence inference from
+[matching kernel source](https://github.com/gregkh/linux/blob/v6.18.31/mm/sparse-vmemmap.c#L416-L465)
+and observed recovery; its branch was not traced. This is one bounded boot,
+not a claim that every allocation warning is harmless.
 [Causes and upstream proposals](adaptations.md).
 
 ## Shutdown

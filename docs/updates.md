@@ -8,7 +8,6 @@
 | Unstable minimal | `nixos-unstable-minimal` |
 
 All use the stock Qubes external kernel. Examples below use **stable XFCE**.
-Minimal release availability: [README](../README.md#versions).
 
 ## Recommended: update packages in the existing template
 
@@ -256,12 +255,9 @@ just because you are upgrading.
 Source migration requires reviewing local settings. There is no safe universal
 command that can merge arbitrary custom modules with a new release.
 
-Use the following steps only with a published release whose source upgrade is
-covered in [testing](testing.md). `RELEASE_TAG` below is the release tag from
-[GitHub Releases](https://github.com/cuzrawr/qubes-nixos/releases), including `v`.
-Do not select `main` for a routine upgrade. No newer release than `v0.1.0` is
-published yet; the following is the staging procedure, not an instruction to
-install an unreleased upgrade.
+The steps below stage `v0.1.1`. Check [test coverage](testing.md) and
+[release changes](../versions.txt) before applying them to a customized template.
+Use a published release tag; do not select `main` for a routine upgrade.
 
 1. **In dom0**, open an administrator terminal in the template:
 
@@ -269,10 +265,10 @@ install an unreleased upgrade.
    qvm-run -u root nixos-26.05-xfce xterm
    ```
 
-2. **In that root terminal**, replace `RELEASE_TAG` before running:
+2. **In that root terminal**, fetch and stage the source:
 
    ```sh
-   release_ref=github:cuzrawr/qubes-nixos/RELEASE_TAG
+   release_ref=github:cuzrawr/qubes-nixos/v0.1.1
    source=$(nix flake metadata --json --no-write-lock-file "$release_ref" |
      python3 -c 'import json,sys; print(json.load(sys.stdin)["path"])') &&
      test -d "$source" &&
@@ -344,21 +340,22 @@ changed; see [generation recovery](recovery.md#restore-a-generation).
 
 ### 0.1.0 to 0.1.1
 
-**0.1.1 is not released. Do not try to fetch its tag or RPM yet.**
+Choose the method before starting:
 
-- The two existing XFCE template names stay the same.
-- Minimal templates are separate installations; an XFCE upgrade does not select
+| Your template | Procedure |
+| --- | --- |
+| Keep custom packages, settings and template files | [Stage the v0.1.1 source](#source-upgrade-for-a-customized-template), review local changes, build, then activate |
+| Replace it with the signed defaults | [Upgrade the image](#replace-with-a-newer-signed-image); back up first because root and template private data are cleared |
+
+- The two XFCE template names stay the same; their RPM release changes from
+  `4.3.0-1` to `4.3.0-2`.
+- Minimal templates are separate installations. An XFCE upgrade does not select
   minimal or remove its desktop applications.
-- Routine package updates alone do not install the integration changes.
-- Source upgrades retaining a custom package and option were tested on copies of
-  both released XFCE templates. That does not cover arbitrary local modifications.
-- Final signed-RPM upgrade and all four published-image acceptance checks are
-  **UNVERIFIED**. There is no completed release-upgrade recipe to claim yet.
-
-Use the routine update procedure for the current installation. Use the
-[coverage record](testing.md) to distinguish tested source changes from release
-artifact testing. Publication must include validated release-specific commands
-before this section can instruct users to upgrade.
+- Routine package updates alone do not install these integration changes.
+- Retain `system.stateVersion` and review local imports and custom modules.
+  Tested source migrations do not cover arbitrary local modifications.
+- Keep the external backup, previous source and retained generations until the
+  updated template and a dependent AppVM have passed the checks below.
 
 ## Replace with a newer signed image
 
@@ -395,10 +392,14 @@ The equivalent **dom0** command, after steps 1-3, is:
 qvm-template --repoid=qubes-nixos --refresh upgrade nixos-26.05-xfce
 ```
 
-For a downloaded signed RPM, use the [transfer and signature setup](../README.md#install-a-signed-rpm),
-then `qvm-template --keyring ./template-key.asc upgrade ./FILE.rpm` in dom0,
-replacing `FILE.rpm` with that release's exact stable XFCE filename.
-Do not use `--nogpgcheck`.
+For a downloaded signed RPM, complete the [transfer and signature setup](../README.md#install-a-signed-rpm),
+then run **in dom0**:
+
+```sh
+qvm-template --keyring ./template-key.asc upgrade ./qubes-template-nixos-26.05-xfce-4.3.0-2.noarch.rpm
+```
+
+This has the same data loss as the GUI upgrade. Do not use `--nogpgcheck`.
 
 ### Check the replacement before using it
 

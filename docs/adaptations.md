@@ -11,6 +11,8 @@
 | Change | Reason and cost |
 | --- | --- |
 | Bind named commands to store paths | Qubes uses FHS paths. Nix must retain each dependency explicitly. A new upstream path can need packaging changes. |
+| Use `/etc/zoneinfo` for Qubes' timezone link | NixOS timedated recognizes this catalog path. Qubes still selects the timezone. |
+| Materialize the X11 font directory | Native `fonts.fontDir.decompressFonts` avoids unreadable symlinked core fonts. Adds about 26-41 MB, depending on the pin. |
 | Fix shebangs and Python wrappers | Interpreters and imported modules must be present outside a distribution-wide Python environment. |
 | Relocate each package's own installed paths | Upstream scripts expect a shared `/usr`. The helper only maps files actually installed by that package, plus explicit mappings. |
 | Use system-profile paths for application discovery and extensions | These deliberately follow the active configuration. They cannot be fixed to one application's output. |

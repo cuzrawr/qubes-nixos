@@ -8,9 +8,22 @@ import tempfile
 import unittest
 
 relocator = str(Path(sys.argv.pop(1)).resolve())
+guest_paths = str(Path(sys.argv.pop(1)).resolve())
 
 
 class PathAdaptationTests(unittest.TestCase):
+    def test_timezone_links_use_the_native_catalog(self):
+        for catalog in ("../usr/share/zoneinfo", "/usr/share/zoneinfo"):
+            with self.subTest(catalog=catalog), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory) / "hash-test-package"
+                root.mkdir()
+                script = root / "timezone"
+                script.write_text(f'qubes_timezone=Etc/UTC\nln -s "{catalog}/$qubes_timezone" "$1"\n')
+                subprocess.run([sys.executable, relocator, str(root), guest_paths], check=True)
+                localtime = Path(directory) / "localtime"
+                subprocess.run(["sh", str(script), str(localtime)], check=True)
+                self.assertEqual(str(localtime.readlink()), "/etc/zoneinfo/Etc/UTC")
+
     def test_dependencies_and_wrappers_take_precedence(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory) / "hash-test-package"

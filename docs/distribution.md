@@ -42,8 +42,7 @@ nix run .#sign-template -- YOUR_KEY_FINGERPRINT \
 gpg --armor --export YOUR_KEY_FINGERPRINT > "$artifacts/template-key.asc"
 ```
 
-- Use the filename produced by your build. v0.1.0 uses release `1`;
-  the 0.1.1 source uses `2`.
+- Use the exact filename produced by your build.
 - Already have a working key? Omit `gpg --quick-generate-key`.
 - Repeat signing for each variant. `sign-template` requires an explicit keyring.
 - The helper uses packaged RPM configuration; host/user RPM macros are ignored.

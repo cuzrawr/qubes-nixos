@@ -8,6 +8,9 @@ let
   hasAudio = system: system.config.systemd.user.sockets ? pipewire;
   withAudio = system: system.extendModules { modules = [ { services.qubes.audio.enable = true; } ]; };
 in
+assert lib.assertMsg (lib.all (
+  system: system.config.fonts.fontDir.enable && system.config.fonts.fontDir.decompressFonts
+) (full ++ minimal)) "GUI profiles must provide regular core font files";
 assert lib.assertMsg (lib.all hasAudio full) "XFCE profiles must retain PipeWire socket activation";
 assert lib.assertMsg (lib.all (
   system: !hasAudio system

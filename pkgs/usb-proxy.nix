@@ -4,7 +4,6 @@
   python3,
   makeWrapper,
   bash,
-  tzdata,
   writeText,
   coreutils,
   gnugrep,
@@ -21,7 +20,7 @@
 let
   paths = writeText "qubes-usb-paths.json" (
     builtins.toJSON (
-      import ./guest-paths.nix { inherit bash tzdata; }
+      import ./guest-paths.nix { inherit bash; }
       // {
         "/usr/bin/udevadm" = "${systemd}/bin/udevadm";
       }

@@ -19,7 +19,6 @@ qvm-run nixos-26.05-xfce xfce4-terminal
 ```
 Before replacing files or a template: [save configuration and verify a backup](updates.md#before-changing-a-template).
 
-**0.1.1 is not released. Final RPM replacement acceptance: UNVERIFIED.**
 [Recorded test coverage](testing.md). Confidence: high for the recorded tests;
 other recovery cases require verification.
 
@@ -263,11 +262,14 @@ If it is unavailable, stop and obtain that signed RPM; do not force an upgrade
 as a recovery shortcut.
 
 For a local signed RPM, use the [transfer and signature procedure](../README.md#install-a-signed-rpm)
-first. In **dom0**, this example reinstalls the published stable XFCE RPM:
+first. For an installed `4.3.0-2` stable XFCE image, run **in dom0**:
 
 ```sh
-qvm-template --keyring ./template-key.asc reinstall ./qubes-template-nixos-26.05-xfce-4.3.0-1.noarch.rpm
+qvm-template --keyring ./template-key.asc reinstall ./qubes-template-nixos-26.05-xfce-4.3.0-2.noarch.rpm
 ```
+
+For an installed `4.3.0-1` image, obtain and use its matching signed RPM from
+`v0.1.0` instead. Do not substitute a newer image in a reinstall command.
 
 **The local command has the same data loss as repository reinstall.**
 Review settings, check boot, and restore needed files from backup. Reapply
@@ -298,7 +300,7 @@ qvm-template remove nixos-26.05-xfce
    the verified signed replacement in **dom0**:
 
 ```sh
-qvm-template --keyring ./template-key.asc install ./qubes-template-nixos-26.05-xfce-4.3.0-1.noarch.rpm
+qvm-template --keyring ./template-key.asc install ./qubes-template-nixos-26.05-xfce-4.3.0-2.noarch.rpm
 ```
 
 7. Review the new template's settings. Start it, check recovery below, and shut
@@ -314,11 +316,14 @@ and Git**, outside dom0:
 ```sh
 git clone https://github.com/cuzrawr/qubes-nixos qubes-nixos-recovery &&
   cd qubes-nixos-recovery &&
-  git switch --detach v0.1.0 &&
+  git switch --detach v0.1.1 &&
   nix build .#template-rpm -o result-stable
 ```
 
-- This tag builds the published stable XFCE profile; it does not contain minimal.
+- This example builds the `v0.1.1` stable XFCE image. Other profile outputs are
+  listed in the [profile table](../README.md#versions).
+- To recover an older image, select its matching release tag. An installed
+  `v0.1.0` image needs that tag and RPM release `1` for same-version reinstall.
 - Keep `flake.lock`; do not update inputs during recovery.
 - [Sign the local RPM](distribution.md#sign-a-local-build), then transfer it
   using the README procedure. Building an RPM does not restore custom files.

@@ -7,7 +7,6 @@
   shared-mime-info,
   fakeroot,
   bash,
-  tzdata,
   systemd,
   nettools,
   zenity,
@@ -58,7 +57,7 @@ let
   };
   paths = writeText "qubes-guest-paths.json" (
     builtins.toJSON (
-      import ./guest-paths.nix { inherit bash tzdata; }
+      import ./guest-paths.nix { inherit bash; }
       // dependencies
       // {
         "/usr/share/tinyproxy/default.html" = "${tinyproxy}/share/tinyproxy/default.html";

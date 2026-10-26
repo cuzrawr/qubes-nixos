@@ -226,9 +226,12 @@
           stable.pkgs.runCommand "qubes-path-adaptation-tests"
             {
               nativeBuildInputs = [ stable.pkgs.python3 ];
+              guestPaths = stable.pkgs.writeText "qubes-guest-paths.json" (
+                builtins.toJSON (import ./pkgs/guest-paths.nix { inherit (stable.pkgs) bash; })
+              );
             }
             ''
-              python3 ${./tests/test_paths.py} ${./pkgs/relocate-paths.py}
+              python3 ${./tests/test_paths.py} ${./pkgs/relocate-paths.py} "$guestPaths"
               touch "$out"
             '';
 
