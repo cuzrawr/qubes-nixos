@@ -25,15 +25,13 @@ Missing features and wider test gaps: [feature gaps](feature-gaps.md).
 | Source `d9263d0` | Four system builds; audio defaults/optional-role evaluation on both pins; stable minimal audio enable, transport, disable and reboot |
 | 0.1.1 minimal candidate RPMs | Both signed and installed with native `qvm-template`; these are not the final release artifacts |
 | Candidate build `ce6fb25` | Both XFCE signed-RPM upgrades; both minimal fresh installs; customized source migration and renamed backup restore on both XFCE pins; bounded stable memory-growth check |
-| Published build `5695e16` | Stable XFCE: native signed-RPM reinstall, exact system/source, template root/private reset, dependent AppVM private checksums retained across two boots, zero failed system/user units |
+| Published build `5695e16` | All four signed release RPMs: native installation, expected running system, zero failed system/user units and shutdown |
+| Published stable XFCE | Native reinstall; exact embedded source; template root/private reset; dependent AppVM private checksums retained across two boots |
 | Published repository | All four RPM sizes and SHA256 hashes match GitHub assets and signed metadata; checksum and metadata signatures verified; Qubes Template Manager lists all four templates |
 | Native repository client | Refreshed listing contains all four templates; stable minimal downloads through the configured UpdateVM; project signature, header and payload verified |
 | Published source | Both XFCE templates retrieve the signed tag through UpdatesProxy without a NetVM; commit and NAR hash match the build |
 
-Final RPM installation for unstable XFCE and both minimal profiles remains
-UNVERIFIED. Clipboard, file-transfer and other transport regressions on the final
-installed RPMs remain UNVERIFIED. Earlier artifact and system-configuration
-coverage is listed separately below.
+Transport coverage applies to the source and artifact revisions named below.
 
 Source checks cover Nix formatting, flake evaluation, path adaptation, template
 name validation, signing isolation/failure cases and ASCII Markdown. The
@@ -74,8 +72,6 @@ Qubes guests or replace runtime acceptance.
   [configured command](../README.md#minimal-templates).
 - Audio uses synthetic input. After revocation, the first 20 ms contained
   previously buffered samples; a new tone was not delivered on either pin.
-- Final-artifact clipboard, file-transfer and other transport regressions are
-  UNVERIFIED until tested on the final installed RPMs.
 
 ### Device enumeration
 
